@@ -1,0 +1,15 @@
+[package]
+name = "loan-controller"
+version = "0.1.0"
+authors = ["social-fi Credit Team"]
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+multiversx-sc = "0.39.5"
+reputation-score = { path = "../reputation-score" }
+
+[dev-dependencies]
+multiversx-sc-scenario = "0.39.5"

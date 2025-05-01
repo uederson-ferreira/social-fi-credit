@@ -20,3 +20,116 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+
+# Dependências
+node_modules/
+package-lock.json
+yarn.lock
+
+# Arquivos de build
+build/
+dist/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.secret
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Diretórios de cobertura
+coverage/
+coverage.json
+
+# Diretórios de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Hardhat
+.openzeppelin/
+hardhat.config.ts.timestamp-*
+
+# Arquivos de chave privada
+*private-key*
+mnemonic.txt
+secrets.json
+
+# Relatórios de gas
+gas-report.txt
+
+# Arquivos temporários
+.tmp/
+temp/
+tmp/
+
+# ElizaOS arquivos específicos
+eliza-credentials.json
+twitter-keys.json
+
+# Arquivos de teste
+test-results/
+playwright-report/
+
+# Arquivos de implantação
+deployed-contracts.json
+deployment-*.json
+
+# Misc
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# Ignora o que não precisa ser copiado para o container
+
+# Dependências
+node_modules
+.env
+.env.local
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Arquivos de lock (apenas se gerados fora do Docker)
+package-lock.json
+poetry.lock
+Pipfile.lock
+
+# Git
+.git
+.gitignore
+
+# Editor/IDE
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Logs e cache
+npm-debug.log
+yarn-error.log
+*.log
+.cache/
+coverage/
+dist/
+build/
+tmp/

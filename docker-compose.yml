@@ -1,0 +1,76 @@
+services:
+  # Backend Python API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: social-fi-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - CORS_ORIGINS=["http://localhost:3000"]
+      - CHAIN_ID=D
+      - GATEWAY_URL=https://devnet-gateway.multiversx.com
+      - CONTRACTS_REPUTATION_SCORE=${REPUTATION_SCORE_ADDRESS}
+      - CONTRACTS_LOAN_CONTROLLER=${LOAN_CONTROLLER_ADDRESS}
+      - CONTRACTS_LIQUIDITY_POOL=${LIQUIDITY_POOL_ADDRESS}
+      - CONTRACTS_DEBT_TOKEN=${DEBT_TOKEN_ADDRESS}
+      - TWITTER_API_KEY=${TWITTER_API_KEY}
+      - TWITTER_API_SECRET=${TWITTER_API_SECRET}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_ACCESS_SECRET=${TWITTER_ACCESS_SECRET}
+    networks:
+      - social-fi-network
+
+  # ElizaOS Twitter Monitor
+  eliza-monitor:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.eliza
+    container_name: social-fi-eliza
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - TWITTER_API_KEY=${TWITTER_API_KEY}
+      - TWITTER_API_SECRET=${TWITTER_API_SECRET}
+      - TWITTER_ACCESS_TOKEN=${TWITTER_ACCESS_TOKEN}
+      - TWITTER_ACCESS_SECRET=${TWITTER_ACCESS_SECRET}
+      - MONITOR_INTERVAL=900  # 15 minutes in seconds
+      - HASHTAG=ElizaOS
+      - API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - social-fi-network
+
+  # Frontend React app
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: social-fi-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_CHAIN_ID=D
+      - REACT_APP_ENVIRONMENT=development
+    depends_on:
+      - backend
+    networks:
+      - social-fi-network
+
+networks:
+  social-fi-network:
+    driver: bridge
