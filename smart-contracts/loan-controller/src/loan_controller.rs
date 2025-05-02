@@ -111,7 +111,89 @@ pub trait LoanController {
         self.max_interest_rate().get()
     }
 
+    #[storage_mapper("mock_timestamp")]
+    fn mock_timestamp(&self) -> SingleValueMapper<u64>;
+
+    #[endpoint]
+    fn set_mock_timestamp(&self, timestamp: u64) {
+        self.mock_timestamp().set(timestamp);
+    }
+
+    #[view]
+    fn get_block_timestamp(&self) -> u64 {
+        self.mock_timestamp().get()
+    }
+
+    #[endpoint]
+    fn set_max_active_loans(&self, max_loans: u64) {
+        self.max_active_loans().set(max_loans);
+    }
+
+    #[view(getMaxActiveLoans)]
+    fn get_max_active_loans(&self) -> u64 {
+        self.max_active_loans().get()
+    }
+
     //================================================
+
+    #[endpoint(requestLoanSync)]
+    fn request_loan_sync(&self, amount: BigUint, duration_days: u64) -> u64 {
+        let caller = self.blockchain().get_caller();
+
+        // Verificar se o usuário já atingiu o limite de empréstimos ativos
+        let active_loans = self.user_loans(caller.clone()).len();
+        let max_active_loans = self.max_active_loans().get();
+        require!(active_loans < max_active_loans as usize, "Limite de empréstimos ativos atingido");
+
+        // Gerar um novo ID de empréstimo
+        let loan_id = self.loan_counter().get();
+        self.loan_counter().set(loan_id + 1);
+
+        // Calcular o valor total a ser pago
+        let interest_rate = self.interest_rate_base().get();
+        let interest_amount = &amount * &BigUint::from(interest_rate) / &BigUint::from(10000u64);
+        let repayment_amount = &amount + &interest_amount;
+
+        // Criar o empréstimo
+        let current_timestamp = self.blockchain().get_block_timestamp();
+        let due_timestamp = current_timestamp + duration_days * 86400;
+
+        let loan = Loan {
+            borrower: caller.clone(),
+            amount: amount.clone(),
+            repayment_amount,
+            interest_rate,
+            creation_timestamp: current_timestamp,
+            due_timestamp,
+            status: LoanStatus::Active,
+        };
+
+        // Armazenar o empréstimo
+        self.loans(loan_id).set(loan);
+
+        // Associar o empréstimo ao usuário
+        self.user_loans(caller.clone()).push(&loan_id);
+
+        // Retornar o ID do empréstimo
+        loan_id
+    }
+
+    #[endpoint]
+    fn mark_expired_loans(&self) {
+        let current_timestamp = self.blockchain().get_block_timestamp();
+    
+        // Iterate over all loans
+        let loan_counter = self.loan_counter().get();
+        for loan_id in 0..loan_counter {
+            let mut loan = self.loans(loan_id).get(); // Use `get` to retrieve the loan
+            // Check if the loan is active and expired
+            if loan.status == LoanStatus::Active && current_timestamp >= loan.due_timestamp {
+                // Mark as defaulted
+                loan.status = LoanStatus::Defaulted;
+                self.loans(loan_id).set(loan);
+            }
+        }
+    }
 
     // Adicione um endpoint para configurar a taxa de extensão
     #[endpoint(setExtensionFeePercent)]
@@ -151,6 +233,24 @@ pub trait LoanController {
         require!(discount <= 10000, "O desconto de liquidação não pode exceder 100%");
         self.liquidation_discount().set(discount);
     }
+
+    // #[endpoint]
+    // fn request_loan(&self, amount: BigUint, interest_rate: u64) -> u64 {
+    //     let loan_id = self.loan_counter().get() + 1;
+    //     self.loan_counter().set(loan_id);
+
+    //     let loan = Loan {
+    //         borrower: self.blockchain().get_caller(),
+    //         amount,
+    //         interest_rate,
+    //         status: LoanStatus::Active,
+    //         creation_timestamp: self.blockchain().get_block_timestamp(),
+    //         due_timestamp: self.blockchain().get_block_timestamp() + 30 * 24 * 60 * 60, // 30 days
+    //     };
+
+    //     self.loans(loan_id).set(loan);
+    //     loan_id
+    // }
 
     // Views para consulta
     #[view(getCollateralRatio)]
@@ -198,6 +298,15 @@ pub trait LoanController {
     fn set_max_loan_term_days(&self, days: u64) {
         self.max_loan_term_days().set(days);
     }
+
+    #[endpoint]
+    fn reputation_check_callback(
+        &self,
+        user_address: ManagedAddress,
+        score: u64,
+    ) {
+        self.user_reputation_scores(&user_address).set(score);
+    }
     
     #[view(getStandardLoanTermDays)]
     fn get_standard_loan_term_days(&self) -> u64 {
@@ -228,6 +337,17 @@ pub trait LoanController {
     #[endpoint]
     fn set_max_term_rate_multiplier(&self, multiplier: u64) {
         self.max_term_rate_multiplier().set(multiplier);
+    }
+
+    #[endpoint]
+    fn set_min_required_score(&self, score: u64) {
+        require!(self.blockchain().get_caller() == self.blockchain().get_owner_address(), "Only owner can call this function");
+        self.min_required_score().set(score);
+    }
+
+    #[view(getMinRequiredScore)]
+    fn get_min_required_score(&self) -> u64 {
+        self.min_required_score().get()
     }
 
     // Views para consulta
@@ -270,6 +390,21 @@ pub trait LoanController {
         } else {
             base_amount
         }
+    }
+
+    #[view(getActiveLoansCount)]
+    fn get_active_loans_count(&self) -> u64 {
+        self.active_loans_count().get()
+    }
+
+    #[endpoint]
+    fn set_operation_timelock(&self, timelock: u64) {
+        self.operation_timelock().set(timelock);
+    }
+
+    #[view(getOperationTimelock)]
+    fn get_operation_timelock(&self) -> u64 {
+        self.operation_timelock().get()
     }
     //================================================
 
@@ -473,7 +608,24 @@ pub trait LoanController {
     
     #[storage_mapper("max_interest_rate")]
     fn max_interest_rate(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("user_reputation_scores")]
+    fn user_reputation_scores(&self, user: &ManagedAddress) -> SingleValueMapper<u64>;
        
+    #[storage_mapper("max_active_loans")]
+    fn max_active_loans(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("active_loans_count")]
+    fn active_loans_count(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("operation_timelock")]
+    fn operation_timelock(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("pending_parameter_changes")]
+    fn pending_parameter_changes(&self, param_type: ParamType) -> SingleValueMapper<ParameterChange>;
+
+    #[storage_mapper("pending_parameter_changes_by_key")]
+    fn pending_parameter_changes_by_key(&self, param_key: BigUint) -> SingleValueMapper<ParameterChange>;
     //=====================================================================
 
     // Proxy para o contrato ReputationScore
@@ -481,20 +633,29 @@ pub trait LoanController {
     fn reputation_score_proxy(&self, address: ManagedAddress) -> reputation_score_proxy::Proxy<Self::Api>;
 }
 
-/*
-Status do empréstimo
-*/
+/*Status do empréstimo*/
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Debug, Clone)]
 pub enum LoanStatus {
     Active,
     Repaid,
     Defaulted,
 }
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ParamType {
+    MinScore,
+    MaxScore,
+    InterestRate,
+}
 
+#[derive(Debug, PartialEq, Eq, Clone, TopEncode, TopDecode, TypeAbi)]
+pub struct ParameterChange {
+    pub value: u64,       // The new value for the parameter
+    pub timestamp: u64,   // The timestamp when the change was requested
+}
 // Dados do empréstimo
 #[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub struct Loan<M: ManagedTypeApi> {
     pub borrower: ManagedAddress<M>,
     pub amount: BigUint<M>,
