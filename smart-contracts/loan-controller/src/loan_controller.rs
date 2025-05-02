@@ -91,6 +91,188 @@ pub trait LoanController {
         }
     }
 
+    #[endpoint]
+    fn set_min_interest_rate(&self, rate: u64) {
+        self.min_interest_rate().set(rate);
+    }
+    
+    #[endpoint]
+    fn set_max_interest_rate(&self, rate: u64) {
+        self.max_interest_rate().set(rate);
+    }
+    
+    #[view(getMinInterestRate)]
+    fn get_min_interest_rate(&self) -> u64 {
+        self.min_interest_rate().get()
+    }
+    
+    #[view(getMaxInterestRate)]
+    fn get_max_interest_rate(&self) -> u64 {
+        self.max_interest_rate().get()
+    }
+
+    //================================================
+
+    // Adicione um endpoint para configurar a taxa de extensão
+    #[endpoint(setExtensionFeePercent)]
+    fn set_extension_fee_percent(&self, fee_percent: u64) {
+        require!(fee_percent <= 10000, "A taxa de extensão não pode exceder 100%");
+        self.extension_fee_percent().set(fee_percent);
+    }
+
+    // Adicione a view para acessar a taxa de extensão
+    #[view(getExtensionFeePercent)]
+    fn get_extension_fee_percent(&self) -> u64 {
+        self.extension_fee_percent().get()
+    }
+
+    // Adicione um endpoint para configurar a taxa diária de atraso
+    #[endpoint(setLateFeeDailyRate)]
+    fn set_late_fee_daily_rate(&self, rate: u64) {
+        require!(rate <= 10000, "A taxa diária de atraso não pode exceder 100%");
+        self.late_fee_daily_rate().set(rate);
+    }
+
+    // Adicione uma view para consultar a taxa diária de atraso
+    #[view(getLateFeeDailyRate)]
+    fn get_late_fee_daily_rate(&self) -> u64 {
+        self.late_fee_daily_rate().get()
+    }
+
+    // Endpoints para configuração
+    #[endpoint(setCollateralRatio)]
+    fn set_collateral_ratio(&self, ratio: u64) {
+        require!(ratio <= 10000, "A razão de garantia não pode exceder 100%");
+        self.collateral_ratio().set(ratio);
+    }
+
+    #[endpoint(setLiquidationDiscount)]
+    fn set_liquidation_discount(&self, discount: u64) {
+        require!(discount <= 10000, "O desconto de liquidação não pode exceder 100%");
+        self.liquidation_discount().set(discount);
+    }
+
+    // Views para consulta
+    #[view(getCollateralRatio)]
+    fn get_collateral_ratio(&self) -> u64 {
+        self.collateral_ratio().get()
+    }
+
+    #[view(getLiquidationDiscount)]
+    fn get_liquidation_discount(&self) -> u64 {
+        self.liquidation_discount().get()
+    }
+
+    // Endpoint para adicionar ou atualizar um investidor
+    #[endpoint]
+    fn add_investor(&self, investor: ManagedAddress, shares: u64) {
+        let current_shares = self.investor_shares(&investor).get();
+        self.investor_shares(&investor).set(current_shares + shares);
+
+        let total_shares = self.total_investor_shares().get();
+        self.total_investor_shares().set(total_shares + shares);
+    }
+
+    // View para consultar as participações de um investidor
+    #[view(getInvestorShares)]
+    fn get_investor_shares(&self, investor: ManagedAddress) -> u64 {
+        self.investor_shares(&investor).get()
+    }
+    // View para consultar o total de participações
+    #[view(getTotalInvestorShares)]
+    fn get_total_investor_shares(&self) -> u64 {
+        self.total_investor_shares().get()
+    }
+
+    #[endpoint]
+    fn set_standard_loan_term_days(&self, days: u64) {
+        self.standard_loan_term_days().set(days);
+    }
+    
+    #[endpoint]
+    fn set_extended_loan_term_days(&self, days: u64) {
+        self.extended_loan_term_days().set(days);
+    }
+    
+    #[endpoint]
+    fn set_max_loan_term_days(&self, days: u64) {
+        self.max_loan_term_days().set(days);
+    }
+    
+    #[view(getStandardLoanTermDays)]
+    fn get_standard_loan_term_days(&self) -> u64 {
+        self.standard_loan_term_days().get()
+    }
+    
+    #[view(getExtendedLoanTermDays)]
+    fn get_extended_loan_term_days(&self) -> u64 {
+        self.extended_loan_term_days().get()
+    }
+    
+    #[view(getMaxLoanTermDays)]
+    fn get_max_loan_term_days(&self) -> u64 {
+        self.max_loan_term_days().get()
+    }
+
+    // Endpoints para configuração
+    #[endpoint]
+    fn set_interest_rate_base(&self, rate: u64) {
+        self.interest_rate_base().set(rate);
+    }
+
+    #[endpoint]
+    fn set_extended_term_rate_multiplier(&self, multiplier: u64) {
+        self.extended_term_rate_multiplier().set(multiplier);
+    }
+
+    #[endpoint]
+    fn set_max_term_rate_multiplier(&self, multiplier: u64) {
+        self.max_term_rate_multiplier().set(multiplier);
+    }
+
+    // Views para consulta
+    #[view(getInterestRateBase)]
+    fn get_interest_rate_base(&self) -> u64 {
+        self.interest_rate_base().get()
+    }
+
+    #[view(getExtendedTermRateMultiplier)]
+    fn get_extended_term_rate_multiplier(&self) -> u64 {
+        self.extended_term_rate_multiplier().get()
+    }
+
+    #[view(getMaxTermRateMultiplier)]
+    fn get_max_term_rate_multiplier(&self) -> u64 {
+        self.max_term_rate_multiplier().get()
+    }
+
+    #[view(calculateDueDateSafely)]
+    fn calculate_due_date_safely(&self, term_in_seconds: u64) -> u64 {
+        let current_timestamp = self.blockchain().get_block_timestamp();
+        let max_seconds = 3650u64 * 24u64 * 60u64 * 60u64; // 10 years in seconds
+
+        // Ensure the term does not exceed the maximum allowed duration
+        let safe_term = core::cmp::min(term_in_seconds, max_seconds);
+
+        // Calculate the due date
+        current_timestamp + safe_term
+    }
+
+    #[view(calculateLoanAmountWithLimits)]
+    fn calculate_loan_amount_with_limits(&self, base_amount: BigUint) -> BigUint {
+        let min_amount = self.base_loan_amount().get();
+        let max_amount = self.max_loan_amount().get();
+
+        if base_amount < min_amount {
+            BigUint::from(min_amount)
+        } else if base_amount > max_amount {
+            BigUint::from(max_amount)
+        } else {
+            base_amount
+        }
+    }
+    //================================================
+
     // Callbacks para processamento assíncrono
     #[callback]
     fn check_eligibility_callback(
@@ -223,8 +405,10 @@ pub trait LoanController {
     fn reputation_score_address(&self) -> SingleValueMapper<ManagedAddress>;
     #[storage_mapper("min_required_score")]
     fn min_required_score(&self) -> SingleValueMapper<u64>;
-    #[storage_mapper("interest_rate_base")]
-    fn interest_rate_base(&self) -> SingleValueMapper<u64>;
+    
+    //#[storage_mapper("interest_rate_base")]
+    //fn interest_rate_base(&self) -> SingleValueMapper<u64>;
+
     #[storage_mapper("base_loan_amount")]
     fn base_loan_amount(&self) -> SingleValueMapper<BigUint>;
     #[storage_mapper("loan_counter")]
@@ -235,6 +419,62 @@ pub trait LoanController {
     fn user_loans(&self, user: ManagedAddress) -> VecMapper<u64>;
     #[storage_mapper("on_time_payments")]
     fn on_time_payments(&self, user: ManagedAddress) -> SingleValueMapper<u64>;
+
+    //=====================================================================
+    // Adicione o mapper de armazenamento para a taxa de extensão
+    #[storage_mapper("extension_fee_percent")]
+    fn extension_fee_percent(&self) -> SingleValueMapper<u64>;
+    
+    // Adicione o mapper de armazenamento para a taxa diária de atraso
+    #[storage_mapper("late_fee_daily_rate")]
+    fn late_fee_daily_rate(&self) -> SingleValueMapper<u64>;
+
+    // Mappers de armazenamento
+    #[storage_mapper("collateral_ratio")]
+    fn collateral_ratio(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("liquidation_discount")]
+    fn liquidation_discount(&self) -> SingleValueMapper<u64>;
+
+    // Mappers de armazenamento para investidores
+    #[storage_mapper("investor_shares")]
+    fn investor_shares(&self, investor: &ManagedAddress) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("total_investor_shares")]
+    fn total_investor_shares(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("standard_loan_term_days")]
+    fn standard_loan_term_days(&self) -> SingleValueMapper<u64>;
+    
+    #[storage_mapper("extended_loan_term_days")]
+    fn extended_loan_term_days(&self) -> SingleValueMapper<u64>;
+    
+    #[storage_mapper("max_loan_term_days")]
+    fn max_loan_term_days(&self) -> SingleValueMapper<u64>;
+
+    // Mappers de armazenamento para taxas de juros e multiplicadores
+    #[storage_mapper("interest_rate_base")]
+    fn interest_rate_base(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("extended_term_rate_multiplier")]
+    fn extended_term_rate_multiplier(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("max_term_rate_multiplier")]
+    fn max_term_rate_multiplier(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("min_loan_amount")]
+    fn min_loan_amount(&self) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("max_loan_amount")]
+    fn max_loan_amount(&self) -> SingleValueMapper<BigUint>;    
+
+    #[storage_mapper("min_interest_rate")]
+    fn min_interest_rate(&self) -> SingleValueMapper<u64>;
+    
+    #[storage_mapper("max_interest_rate")]
+    fn max_interest_rate(&self) -> SingleValueMapper<u64>;
+       
+    //=====================================================================
 
     // Proxy para o contrato ReputationScore
     #[proxy]

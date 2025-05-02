@@ -16,7 +16,6 @@ where
     ContractObjBuilder: 'static + Copy + Fn() -> reputation_score::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
-    pub owner_address: Address,
     pub oracle_address: Address,
     pub contract_wrapper: ContractObjWrapper<reputation_score::ContractObj<DebugApi>, ContractObjBuilder>,
 }
@@ -56,7 +55,6 @@ where
     
     ContractSetup {
         blockchain_wrapper,
-        owner_address,
         oracle_address,
         contract_wrapper,
     }
@@ -173,6 +171,7 @@ fn test_edge_cases() {
     
     // Verificar cálculo de empréstimo com valor base muito grande
     let large_base = u64::MAX;
+
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             let max_loan = sc.calculate_max_loan_amount(
@@ -181,8 +180,13 @@ fn test_edge_cases() {
             );
             
             // User2 tem pontuação máxima, então o resultado esperado é base * 2
-            let expected = BigUint::from(large_base) * BigUint::from(2u64);
-            assert_eq!(max_loan, managed_biguint!(expected));
+            let expected: BigUint<DebugApi> = BigUint::from(large_base) * BigUint::from(2u64);
+            
+            // Convert BigUint to u64 for comparison
+            let max_loan_u64 = max_loan.to_u64().expect("Conversion to u64 failed");
+            let expected_u64 = expected.to_u64().expect("Conversion to u64 failed");
+            
+            assert_eq!(max_loan_u64, expected_u64);
         })
         .assert_ok();
 }

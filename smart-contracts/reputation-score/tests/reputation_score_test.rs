@@ -14,7 +14,6 @@ where
     ContractObjBuilder: 'static + Copy + Fn() -> reputation_score::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
-    pub owner_address: Address,
     pub oracle_address: Address,
     pub user_address: Address,
     pub contract_wrapper: ContractObjWrapper<reputation_score::ContractObj<DebugApi>, ContractObjBuilder>,
@@ -56,7 +55,6 @@ where
     
     ContractSetup {
         blockchain_wrapper,
-        owner_address,
         oracle_address,
         user_address,
         contract_wrapper,

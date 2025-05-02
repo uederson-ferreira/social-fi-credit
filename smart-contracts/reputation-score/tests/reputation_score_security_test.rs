@@ -1,8 +1,6 @@
 use multiversx_sc::types::Address;
 use multiversx_sc_scenario::{
-    managed_address, rust_biguint,
-    testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
-    DebugApi,
+    managed_address, managed_biguint, rust_biguint, testing_framework::{BlockchainStateWrapper, ContractObjWrapper}, DebugApi
 };
 
 use reputation_score::*;
@@ -14,7 +12,6 @@ where
     ContractObjBuilder: 'static + Copy + Fn() -> reputation_score::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
-    pub owner_address: Address,
     pub oracle_address: Address,
     pub attacker_address: Address,
     pub user_address: Address,
@@ -58,7 +55,6 @@ where
     
     ContractSetup {
         blockchain_wrapper,
-        owner_address,
         oracle_address,
         attacker_address,
         user_address,

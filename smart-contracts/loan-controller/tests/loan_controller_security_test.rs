@@ -2,7 +2,7 @@
 // ARQUIVO: loan_controller_security_test.rs
 // Descrição: Testes de segurança para o contrato LoanController
 // ==========================================================================
-
+use multiversx_sc::contract_base::ContractBase;
 use multiversx_sc::types::{Address, BigUint};
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
@@ -122,7 +122,7 @@ fn test_arithmetic_extremes() {
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             // Testar cálculo de juros para valor muito grande
-            let large_amount = BigUint::from(u64::MAX);
+            let large_amount: BigUint<DebugApi> = BigUint::from(u64::MAX);
             let interest_rate = 1000u64; // 10%
             
             // Cálculo: amount * interest_rate / 10000
