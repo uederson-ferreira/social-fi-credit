@@ -1,15 +1,17 @@
 [package]
 name = "loan-controller"
 version = "0.1.0"
-authors = ["social-fi Credit Team"]
 edition = "2021"
+publish = false
 
 [lib]
-path = "src/lib.rs"
+path = "src/loan_controller.rs"
 
 [dependencies]
-multiversx-sc = "0.39.5"
+multiversx-sc = "0.57.1"
+common-types = { path = "../common-types" }
 reputation-score = { path = "../reputation-score" }
+debt-token = { path = "../debt-token" }
 
 [dev-dependencies]
-multiversx-sc-scenario = "0.39.5"
+multiversx-sc-scenario = "0.57.1"
