@@ -1,11 +1,29 @@
 // ==========================================================================
-// MÓDULO: debt-token/src/lib.rs
-// Descrição: Contrato inteligente que gerencia tokens de dívida como NFTs
-//            para representar empréstimos na blockchain MultiversX
+// MÓDULO: debt-token/src/debt_token.rs
+// AUTOR: Uderson de Amadeu Ferreira
+// DATA: 2023-10-01
+// ÚLTIMA ATUALIZAÇÃO: 2023-10-02
+// DESCRIÇÃO: Este módulo implementa um contrato inteligente para gerenciar
+//            tokens de dívida como NFTs na blockchain MultiversX.
+//            O contrato permite a emissão de tokens de dívida, criação de NFTs
+//            para empréstimos, e a queima de NFTs quando os empréstimos são
+//            pagos ou inadimplentes. O contrato também inclui funcionalidades
+//            para mintar e queimar tokens fungíveis associados aos NFTs.
+//            Além disso, o contrato emite eventos para auditoria e rastreamento
+//            de ações importantes, como a criação e queima de NFTs.
+// AUTORIZAÇÃO: Este código é de domínio público e pode ser utilizado
+//              livremente, desde que os devidos créditos sejam dados ao autor.
+// LICENÇA: Este código é fornecido "como está", sem garantias de qualquer tipo,
+//          expressas ou implícitas, incluindo, mas não se limitando a,
+//          garantias de comercialização ou adequação a um propósito específico.
+//          O autor não se responsabiliza por quaisquer danos diretos,
+//          indiretos, incidentais ou consequenciais resultantes do uso deste
+//          código. O uso deste código implica na aceitação dos termos desta
+//          licença.
 // ==========================================================================
+
 #![no_std]
 multiversx_sc::imports!();
-use core::convert::TryFrom;
 
 #[multiversx_sc::contract]
 pub trait DebtToken {
@@ -105,6 +123,47 @@ pub trait DebtToken {
         nft_nonce
     }
 
+    //=====================================================================
+    // Adicionando o método mint ao contrato
+    #[endpoint(mint)]
+    fn mint(&self, recipient: ManagedAddress, amount: BigUint) {
+        let caller = self.blockchain().get_caller();
+        require!(caller == self.loan_controller_address().get(), "Only loan controller can mint tokens");
+        require!(!self.debt_token_id().is_empty(), "Debt token not issued yet");
+
+        let token_id = self.debt_token_id().get();
+        self.send().direct_esdt(&recipient, &token_id, 0, &amount); // 0 é o nonce para tokens fungíveis
+    }
+
+    // Adicionando o método burn ao contrato
+    #[endpoint(burn)]
+    fn burn(&self, recipient: ManagedAddress, amount: BigUint) {
+        let caller = self.blockchain().get_caller();
+        require!(caller == self.loan_controller_address().get(), "Only loan controller can burn tokens");
+        require!(!self.debt_token_id().is_empty(), "Debt token not issued yet");
+
+        let token_id = self.debt_token_id().get();
+        self.send().esdt_local_burn(&token_id, 0, &amount); // 0 é o nonce para tokens fungíveis
+
+        self.send().direct_esdt(&recipient, &token_id, 0, &BigUint::zero()); // Atualiza o saldo do destinatário
+    }
+
+    // filepath: /Users/uedersonferreira/MeusProjetos/Programacao/NearX/social-fi-credit/smart-contracts/debt-token/src/debt_token.rs
+    
+    #[view(balanceOf)]
+    fn balance_of(&self, address: ManagedAddress) -> BigUint {
+        let token_id = self.debt_token_id().get();
+        self.blockchain().get_esdt_balance(&address, &token_id, 0) // 0 é o nonce para tokens fungíveis
+    }
+
+    #[view(totalTokenSupply)]
+    fn total_token_supply(&self) -> BigUint {
+        let token_id = self.debt_token_id().get();
+        self.blockchain().get_esdt_balance(&self.blockchain().get_sc_address(), &token_id, 0) // 0 é o nonce para tokens fungíveis
+    }
+    //=====================================================================
+
+
     // Queima o NFT quando o empréstimo é pago ou inadimplente
     #[endpoint(burnDebtNft)]
     fn burn_debt_nft(&self, loan_id: u64) {
@@ -198,4 +257,5 @@ pub trait DebtToken {
 
     #[storage_mapper("loan_to_debt_nft")]
     fn loan_to_debt_nft(&self, loan_id: u64) -> SingleValueMapper<u64>;
+    
 }

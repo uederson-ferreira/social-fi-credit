@@ -1,0 +1,206 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "liquidity-pool",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.57.1"
+        }
+    },
+    "name": "LiquidityPool",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "loan_controller_address",
+                "type": "Address"
+            },
+            {
+                "name": "min_deposit_amount",
+                "type": "BigUint"
+            },
+            {
+                "name": "annual_yield_percentage",
+                "type": "u64"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "depositFunds",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "withdrawFunds",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "provideFundsForLoan",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "token_id",
+                    "type": "TokenIdentifier"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "receiveLoanRepayment",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "getAnnualYieldPercentage",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getTotalLiquidity",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getProviderFunds",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "provider",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "ProviderFunds"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "funds_deposited",
+            "inputs": [
+                {
+                    "name": "provider",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "funds_withdrawn",
+            "inputs": [
+                {
+                    "name": "provider",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "yield_processed",
+            "inputs": [
+                {
+                    "name": "provider",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "funds_provided_for_loan",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "loan_repayment_received",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "ProviderFunds": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_id",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "last_yield_timestamp",
+                    "type": "u64"
+                }
+            ]
+        }
+    }
+}

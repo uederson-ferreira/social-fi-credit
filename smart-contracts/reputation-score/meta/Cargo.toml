@@ -1,0 +1,12 @@
+[package]
+name = "reputation-score-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies.reputation-score]
+path = ".."
+
+[dependencies.multiversx-sc-meta-lib]
+version = "0.57.1"
+default-features = false

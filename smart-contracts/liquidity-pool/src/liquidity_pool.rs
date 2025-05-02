@@ -4,7 +4,9 @@
 //            financiar empréstimos na blockchain MultiversX
 // ==========================================================================
 #![no_std]
+
 multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 #[multiversx_sc::contract]
 pub trait LiquidityPool {
@@ -30,11 +32,17 @@ pub trait LiquidityPool {
     // Esta função permite que usuários depositem tokens para fornecer liquidez
     #[payable("*")]
     #[endpoint(depositFunds)]
-    fn deposit_funds(&self) -> SCResult<()> {
+    fn deposit_funds(&self) {
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().egld_or_single_esdt();
         let amount = payment.amount;
-        let token_id = payment.token_identifier;
+        let payment_token = payment.token_identifier.clone();
+        
+        // EGLD não é aceito, apenas tokens ESDT
+        require!(!payment_token.is_egld(), "EGLD não é aceito, apenas tokens ESDT");
+        
+        // Extraímos o TokenIdentifier a partir do EgldOrEsdtTokenIdentifier
+        let token_id = payment_token.unwrap_esdt();
         
         require!(
             amount >= self.min_deposit_amount().get(),
@@ -46,7 +54,7 @@ pub trait LiquidityPool {
         // Se for a primeira vez depositando, cria registro do provedor
         if self.provider_funds(caller.clone()).is_empty() {
             self.provider_funds(caller.clone()).set(ProviderFunds {
-                token_id: token_id.clone(),
+                token_id,
                 amount: amount.clone(),
                 last_yield_timestamp: current_timestamp,
             });
@@ -56,7 +64,7 @@ pub trait LiquidityPool {
         } else {
             // Se já for um provedor, atualiza os registros
             // Primeiro, processa qualquer rendimento pendente
-            self.process_pending_yield(&caller)?; // Adicionado ? para propagação de erro
+            self.process_pending_yield(&caller);
             
             // Em seguida, adiciona o novo depósito
             let mut provider_funds = self.provider_funds(caller.clone()).get();
@@ -65,25 +73,23 @@ pub trait LiquidityPool {
                 "Token type doesn't match existing deposit"
             );
             
-            provider_funds.amount += amount;
+            provider_funds.amount += amount.clone();
             provider_funds.last_yield_timestamp = current_timestamp;
             
-            self.provider_funds(caller).set(provider_funds);
+            self.provider_funds(caller.clone()).set(provider_funds);
         }
         
         // Atualiza a liquidez total do pool
-        self.total_liquidity().update(|liquidity| *liquidity += amount);
+        self.total_liquidity().update(|liquidity| *liquidity += amount.clone());
         
         // Emite evento para auditoria
         self.funds_deposited_event(&caller, &amount);
-        
-        Ok(()) // Este retorno está correto, desde que SCResult seja o tipo importado corretamente
     }
     
     // Retira fundos do pool de liquidez
     // Esta função permite que provedores de liquidez retirem seus fundos e rendimentos
     #[endpoint(withdrawFunds)]
-    fn withdraw_funds(&self, amount: BigUint) -> SCResult<()> {
+    fn withdraw_funds(&self, amount: BigUint) {
         let caller = self.blockchain().get_caller();
         
         require!(
@@ -92,7 +98,7 @@ pub trait LiquidityPool {
         );
         
         // Processa qualquer rendimento pendente primeiro
-        self.process_pending_yield(&caller)?; // Adicionado ? para propagação de erro
+        self.process_pending_yield(&caller);
         
         let mut provider_funds = self.provider_funds(caller.clone()).get();
         
@@ -114,9 +120,7 @@ pub trait LiquidityPool {
         
         // Se retirou completamente, remove da lista de provedores
         if self.provider_funds(caller.clone()).get().amount == BigUint::zero() {
-            // CORREÇÃO: O código anterior obtinha toda a lista de provedores de uma vez
-            // e depois tentava manipulá-la, o que não funciona com VecMapper.
-            // Agora iteramos pelos índices e usamos o método apropriado para remover.
+            // Iteramos pelos índices e usamos o método apropriado para remover
             let provider_count = self.providers().len();
             for i in 0..provider_count {
                 let provider_addr = self.providers().get(i);
@@ -131,27 +135,26 @@ pub trait LiquidityPool {
             self.provider_funds(caller.clone()).clear();
         }
         
-        // CORREÇÃO: Conversão adequada de TokenIdentifier para EgldOrEsdtTokenIdentifier
-        // que é o tipo esperado pelo método direct()
-        let esdt_token_id = EgldOrEsdtTokenIdentifier::esdt(token_id);
-        self.send().direct(&caller, &esdt_token_id, 0, &amount);
+        // Convertemos o TokenIdentifier para EgldOrEsdtTokenIdentifier para enviar os tokens
+        let esdt_token = EgldOrEsdtTokenIdentifier::esdt(token_id);
+        
+        // Envia os tokens para o usuário
+        self.send().direct(&caller, &esdt_token, 0, &amount);
         
         // Emite evento para auditoria
         self.funds_withdrawn_event(&caller, &amount);
-        
-        Ok(())
     }
     
     // Processa rendimento pendente para um provedor
     // Esta função interna calcula e adiciona rendimentos com base no tempo decorrido
-    fn process_pending_yield(&self, provider: &ManagedAddress) -> SCResult<()> {
+    fn process_pending_yield(&self, provider: &ManagedAddress) {
         let mut provider_funds = self.provider_funds(provider.clone()).get();
         let current_timestamp = self.blockchain().get_block_timestamp();
         let time_diff_seconds = current_timestamp - provider_funds.last_yield_timestamp;
         
         // Pula se nenhum tempo passou
         if time_diff_seconds == 0 {
-            return Ok(());
+            return;
         }
         
         // Calcula rendimento: annual_yield_percentage / seconds_in_year * time_diff_seconds * amount
@@ -174,14 +177,12 @@ pub trait LiquidityPool {
         if yield_amount > BigUint::zero() {
             self.yield_processed_event(provider, &yield_amount);
         }
-        
-        Ok(())
     }
     
     // Fornece fundos para empréstimo
     // Esta função permite que o controlador de empréstimos obtenha fundos do pool
     #[endpoint(provideFundsForLoan)]
-    fn provide_funds_for_loan(&self, amount: BigUint, token_id: TokenIdentifier) -> SCResult<()> {
+    fn provide_funds_for_loan(&self, amount: BigUint, token_id: TokenIdentifier) {
         let caller = self.blockchain().get_caller();
         
         require!(
@@ -194,24 +195,24 @@ pub trait LiquidityPool {
             "Insufficient liquidity in pool"
         );
         
-        // CORREÇÃO: Conversão adequada de TokenIdentifier para EgldOrEsdtTokenIdentifier
-        let esdt_token_id = EgldOrEsdtTokenIdentifier::esdt(token_id);
-        self.send().direct(&caller, &esdt_token_id, 0, &amount);
+        // Convertemos o TokenIdentifier para EgldOrEsdtTokenIdentifier para enviar os tokens
+        let esdt_token = EgldOrEsdtTokenIdentifier::esdt(token_id);
+        
+        // Envia tokens para o controlador de empréstimos
+        self.send().direct(&caller, &esdt_token, 0, &amount);
         
         // Atualiza a liquidez total
         self.total_liquidity().update(|liquidity| *liquidity -= &amount);
         
         // Emite evento para auditoria
         self.funds_provided_for_loan_event(&amount);
-        
-        Ok(())
     }
     
     // Recebe pagamento de empréstimo
     // Esta função permite que o controlador de empréstimos devolva fundos ao pool
     #[payable("*")]
     #[endpoint(receiveLoanRepayment)]
-    fn receive_loan_repayment(&self) -> SCResult<()> {
+    fn receive_loan_repayment(&self) {
         let caller = self.blockchain().get_caller();
         
         require!(
@@ -220,15 +221,13 @@ pub trait LiquidityPool {
         );
         
         let payment = self.call_value().egld_or_single_esdt();
-        let amount = payment.amount;
-        
-        // Atualiza a liquidez total
-        self.total_liquidity().update(|liquidity| *liquidity += amount);
+        let amount = payment.amount.clone(); // Clone para evitar uso após movimento
         
         // Emite evento para auditoria
         self.loan_repayment_received_event(&amount);
         
-        Ok(())
+        // Atualiza a liquidez total
+        self.total_liquidity().update(|liquidity| *liquidity += amount);
     }
     
     // Obter taxa de rendimento anual atual
@@ -322,9 +321,8 @@ pub trait LiquidityPool {
 }
 
 // Estrutura para armazenar informações dos fundos do provedor
-// NOTA: As anotações de derive já estão corretas neste arquivo.
-// Apenas certifique-se de que estão importadas corretamente.
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode)]
 pub struct ProviderFunds<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,    // Identificador do token depositado
     pub amount: BigUint<M>,              // Valor total incluindo rendimentos

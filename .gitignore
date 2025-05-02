@@ -135,5 +135,4 @@ build/
 tmp/
 
 Cargo.lock
-Cargo.toml
 target/

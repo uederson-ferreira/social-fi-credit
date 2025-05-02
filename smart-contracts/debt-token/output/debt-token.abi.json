@@ -1,0 +1,175 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "debt-token",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.57.1"
+        }
+    },
+    "name": "DebtToken",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "loan_controller_address",
+                "type": "Address"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "issueDebtToken",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "createDebtNft",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "borrower",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "interest_rate",
+                    "type": "u64"
+                },
+                {
+                    "name": "due_timestamp",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "mint",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "recipient",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "burn",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "recipient",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "balanceOf",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "totalTokenSupply",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "burnDebtNft",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "events": [
+        {
+            "identifier": "debt_nft_created",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "nft_nonce",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "borrower",
+                    "type": "Address",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "debt_nft_burned",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "nft_nonce",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": true,
+    "types": {}
+}

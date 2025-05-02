@@ -1,0 +1,78 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "loan-controller",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.57.1"
+        }
+    },
+    "name": "LoanController",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "reputation_score_address",
+                "type": "Address"
+            },
+            {
+                "name": "min_required_score",
+                "type": "u64"
+            },
+            {
+                "name": "interest_rate_base",
+                "type": "u64"
+            },
+            {
+                "name": "base_loan_amount",
+                "type": "BigUint"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "requestLoan",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "duration_days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "repayLoan",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": true,
+    "types": {}
+}

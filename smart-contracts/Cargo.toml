@@ -1,0 +1,22 @@
+#Cargo GERAL presente em smart-contracts/Cargo.toml
+[workspace]
+members = [
+  "debt-token",
+  "liquidity-pool",
+  "loan-controller",
+  "reputation-score",
+  "debt-token/meta",
+  "liquidity-pool/meta",
+  "loan-controller/meta",
+  "reputation-score/meta"
+]
+
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = true
+panic = "abort"
+overflow-checks = true
+codegen-units = 1

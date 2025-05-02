@@ -1,0 +1,9 @@
+#Cargo do common-types presente em smart-contracts/common-types/Cargo.toml
+[package]
+name = "common-types"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+multiversx-sc = "0.57.1"

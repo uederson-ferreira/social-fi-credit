@@ -1,0 +1,18 @@
+#Cargo do debt-token presente em smart-contracts/debt-token/Cargo.toml
+[package]
+name = "debt-token"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/debt_token.rs"
+
+[dependencies]
+common-types = { path = "../common-types" }
+multiversx-sc = "0.57.1"
+getrandom = { version = "0.2.10", features = ["js"] }
+rand = "0.8.5"
+
+[dev-dependencies]
+multiversx-sc-scenario = "0.57.1"

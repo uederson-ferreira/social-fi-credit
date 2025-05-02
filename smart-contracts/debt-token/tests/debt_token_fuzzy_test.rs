@@ -109,8 +109,7 @@ fn test_mint_burn_fuzzy() {
             // Queimar tokens (apenas se o usuário tiver saldo suficiente)
             setup.blockchain_wrapper
                 .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                    let current_balance = sc.balance_of(&managed_address!(user_address));
-                    
+                    let current_balance = sc.balance_of(managed_address!(user_address));
                     // Só queimar se tiver saldo suficiente
                     if current_balance >= managed_biguint!(amount) {
                         sc.burn(managed_address!(user_address), managed_biguint!(amount));
@@ -123,12 +122,12 @@ fn test_mint_burn_fuzzy() {
     // Verificar consistência da oferta total
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let total_supply = sc.total_token_supply().get();
+            let total_supply = sc.total_token_supply();
             
             // Calcular a soma dos saldos de todos os usuários
             let mut sum_balances = managed_biguint!(0);
             for user in &setup.users {
-                let balance = sc.balance_of(&managed_address!(user));
+                let balance = sc.balance_of(managed_address!(user));
                 sum_balances += balance;
             }
             
@@ -158,11 +157,11 @@ fn test_transfers_fuzzy() {
     }
     
     // Guardar o total de oferta para verificação final
-    let initial_total_supply = setup.blockchain_wrapper
+    let initial_total_supply: BigUint = setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            sc.total_token_supply().get()
+            sc.total_token_supply()
         })
-        .unwrap_or_default();
+        .unwrap_or_else(|| managed_biguint!(0));
     
     // Realizar várias transferências aleatórias
     for _ in 0..200 {
@@ -180,9 +179,9 @@ fn test_transfers_fuzzy() {
         // Obter saldo do remetente
         let sender_balance = setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                sc.balance_of(&managed_address!(sender))
+                sc.balance_of(managed_address!(sender));
             })
-            .unwrap_or_default();
+            .pending_calls.async_call.unwrap_or_default();
         
         if sender_balance > BigUint::zero() {
             // Gerar valor aleatório para transferência (até o saldo disponível)

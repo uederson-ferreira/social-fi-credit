@@ -1,0 +1,17 @@
+#Cargo do liquidity-pool presente em smart-contracts/liquidity-pool/Cargo.toml
+[package]
+name = "liquidity-pool"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+path = "src/liquidity_pool.rs"
+
+[dependencies]
+multiversx-sc = "0.57.1"
+common-types = { path = "../common-types" }
+loan-controller = { path = "../loan-controller"}
+
+[dev-dependencies]
+multiversx-sc-scenario = "0.57.1"

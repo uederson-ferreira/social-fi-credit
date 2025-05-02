@@ -1,3 +1,4 @@
+#Cargo do loan-controller presente em smart-contracts/loan-controller/Cargo.toml
 [package]
 name = "loan-controller"
 version = "0.1.0"
