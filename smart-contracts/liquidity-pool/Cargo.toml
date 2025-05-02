@@ -12,6 +12,8 @@ path = "src/liquidity_pool.rs"
 multiversx-sc = "0.57.1"
 common-types = { path = "../common-types" }
 loan-controller = { path = "../loan-controller"}
+getrandom = { version = "0.2.10", features = ["js"] }
+rand = "0.8.5"
 
 [dev-dependencies]
 multiversx-sc-scenario = "0.57.1"
