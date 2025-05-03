@@ -498,7 +498,7 @@ fn test_front_running_protection() {
     setup.blockchain_wrapper
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             sc.blockchain().get_block_timestamp();
-            sc.request_loan(managed_biguint!(5000), 1000u64);
+            sc.request_loan(managed_biguint!(5000), LoanTerm::Standard);
         })
         .assert_user_error("Global loan limit reached");
 }
@@ -701,7 +701,7 @@ fn test_self_destruct_security() {
             sc.initiate_contract_destruction();
             
             // Verificar que foi iniciado
-            assert!(sc.destruction_pending().get());
+            assert!(sc.destruction_pending_v2().get());
             assert_eq!(sc.destruction_confirmation_count().get(), 1u32);
             
             // Na vida real, seria necessária uma segunda transação para confirmação
@@ -712,10 +712,10 @@ fn test_self_destruct_security() {
     setup.blockchain_wrapper
         .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Verificar estado atual
-            assert!(sc.destruction_pending().get());
+            assert!(sc.destruction_pending_v2().get());
             
             // Confirmar destruição
-            sc.confirm_contract_destruction();
+            sc.confirm_contract_destruction_v2();
             
             // Verificar contador
             assert_eq!(sc.destruction_confirmation_count().get(), 2u32);
@@ -733,10 +733,10 @@ fn test_self_destruct_security() {
     // Verificar que é possível cancelar a destruição
     setup.blockchain_wrapper
         .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.cancel_contract_destruction();
+            sc.cancel_contract_destruction_v2();
             
             // Verificar que foi cancelado
-            assert!(!sc.destruction_pending().get());
+            assert!(!sc.destruction_pending_v2().get());
             assert_eq!(sc.destruction_confirmation_count().get(), 0u32);
         })
         .assert_ok();

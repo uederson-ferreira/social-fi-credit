@@ -1,7 +1,9 @@
 [
   "bigIntAdd",
   "bigIntCmp",
+  "bigIntFinishUnsigned",
   "bigIntGetCallValue",
+  "bigIntGetExternalBalance",
   "bigIntGetUnsignedArgument",
   "bigIntMul",
   "bigIntSetInt64",
@@ -16,6 +18,7 @@
   "mBufferFromBigIntUnsigned",
   "mBufferGetArgument",
   "mBufferGetByteSlice",
+  "mBufferGetBytes",
   "mBufferGetLength",
   "mBufferNew",
   "mBufferSetBytes",
@@ -27,8 +30,11 @@
   "managedGetMultiESDTCallValue",
   "managedGetOriginalTxHash",
   "managedMultiTransferESDTNFTExecute",
+  "managedOwnerAddress",
+  "managedSCAddress",
   "managedSignalError",
   "managedTransferValueExecute",
   "signalError",
+  "smallIntFinishUnsigned",
   "smallIntGetUnsignedArgument"
 ]

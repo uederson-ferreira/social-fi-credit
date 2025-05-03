@@ -158,10 +158,10 @@ fn test_transfers_fuzzy() {
     
     // Guardar o total de oferta para verificação final
     let initial_total_supply = setup.blockchain_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            sc.total_token_supply()
-        })
-        .unwrap_or(BigUint::<DebugApi>::zero());
+                .execute_query(&setup.contract_wrapper, |sc| {
+                    sc.total_token_supply();
+                })
+                .pending_calls.async_call.unwrap_or(BigUint::<DebugApi>::zero());
     
     // Realizar várias transferências aleatórias
     for _ in 0..200 {

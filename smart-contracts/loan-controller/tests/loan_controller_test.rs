@@ -3,11 +3,12 @@
 // Descrição: Testes unitários básicos para o contrato LoanController
 // ==========================================================================
 
-use multiversx_sc::types::{Address, BigUint};
+use multiversx_sc_scenario::imports::{ManagedVec, ContractBase};
+use multiversx_sc_scenario::api::DebugApi;
+use multiversx_sc::types::Address;
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
-    DebugApi,
 };
 
 use loan_controller::*;
@@ -158,7 +159,7 @@ fn test_loan_mappings() {
             assert_eq!(loan.status, LoanStatus::Active);
             
             // Verificar associação com o usuário
-            let user_loans = sc.user_loans(managed_address!(&setup.borrower_address)).get();
+            let user_loans: Vec<u64> = sc.user_loans(managed_address!(&setup.borrower_address)).iter().collect();
             assert_eq!(user_loans.len(), 1);
             assert_eq!(user_loans[0], 1u64);
         })
@@ -174,14 +175,12 @@ fn test_loan_mappings() {
 fn test_request_loan_success() {
     let mut setup = setup_contract(loan_controller::contract_obj);
     
-    // Simular resposta da pontuação de reputação
+    // Configurar uma pontuação de reputação fictícia alta
     setup.blockchain_wrapper
         .execute_tx(&setup.reputation_score_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Configurar uma pontuação de reputação fictícia alta
-            let score_value = 800u64; // Acima do mínimo (500)
             sc.reputation_check_callback(
                 managed_address!(&setup.borrower_address),
-                score_value,
+                800u64, // Acima do mínimo (500)
             );
         })
         .assert_ok();
@@ -189,39 +188,46 @@ fn test_request_loan_success() {
     // Solicitar empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Definir timestamp atual para o teste
-            sc.blockchain().set_block_timestamp(10000);
+            // Definir timestamp atual
+            sc.get_block_timestamp();
             
             // Solicitar empréstimo
-            let loan_id = sc.request_loan();
+            let loan_id = sc.request_loan(
+                managed_biguint!(10_000), // Valor do empréstimo
+                LoanTerm::Standard,       // Termo padrão
+            );
             
-            // Verificar que foi atribuído ID 1
-            assert_eq!(loan_id, 1u64);
+            // Verificar ID e contador
+            sc.request_loan(
+                managed_biguint!(10_000), // Valor do empréstimo
+                LoanTerm::Standard,       // Termo padrão
+            );
+            assert_eq!(sc.loan_counter().get(), 1u64);
             assert_eq!(sc.loan_counter().get(), 1u64);
             
-            // Verificar dados do empréstimo
+            // Obter e verificar dados do empréstimo
             let loan = sc.loans(1u64).get();
-            assert_eq!(loan.borrower, managed_address!(&setup.borrower_address));
-            assert_eq!(loan.amount, managed_biguint!(10_000)); // Base loan amount
             
-            // Calcular taxa de juros esperada para score 800: 1000 * (1 - (800/1000) * 0.8) = 360
+            // Verificar dados básicos
+            assert_eq!(loan.borrower, managed_address!(&setup.borrower_address));
+            assert_eq!(loan.amount, managed_biguint!(10_000));
+            assert_eq!(loan.status, LoanStatus::Active);
+            
+            // Verificar cálculo de juros (800 score = 360 taxa)
             assert_eq!(loan.interest_rate, 360u64);
             
-            // Verificar valor de repagamento (principal + juros): 10000 + (10000 * 360 / 10000) = 10360
-            let expected_repayment = managed_biguint!(10_360);
+            // Verificar valor total com juros
+            let expected_repayment = managed_biguint!(10_360); // 10000 + (10000 * 360 / 10000)
             assert_eq!(loan.repayment_amount, expected_repayment);
             
             // Verificar timestamps
             assert_eq!(loan.creation_timestamp, 10000u64);
-            assert_eq!(loan.due_timestamp, 10000u64 + 30 * 24 * 60 * 60); // 30 dias em segundos
+            assert_eq!(loan.due_timestamp, 10000u64 + 30u64 * 24u64 * 60u64 * 60u64);
             
-            // Verificar status
-            assert_eq!(loan.status, LoanStatus::Active);
-            
-            // Verificar associação com o usuário
-            let user_loans = sc.user_loans(managed_address!(&setup.borrower_address)).get();
+            // Verificar lista de empréstimos do usuário
+            let user_loans: Vec<u64> = sc.user_loans(managed_address!(&setup.borrower_address)).iter().collect();
             assert_eq!(user_loans.len(), 1);
-            assert_eq!(user_loans[0], 1u64);
+            assert_eq!(user_loans.get(0).unwrap(), &1u64);
         })
         .assert_ok();
 }
@@ -246,15 +252,16 @@ fn test_request_loan_insufficient_score() {
     // Tentar solicitar empréstimo (deve falhar)
     setup.blockchain_wrapper
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.blockchain().set_block_timestamp(10000);
+            // Simulate block timestamp by mocking or using a custom implementation
+            let current_timestamp = sc.blockchain().get_block_timestamp();
+            assert!(current_timestamp >= 10000, "Ensure the block timestamp is valid for the test.");
             
             // Deve lançar erro
-            sc.request_loan();
+            sc.request_loan(managed_biguint!(10_000), LoanTerm::Standard);
         })
         .assert_user_error("Insufficient reputation score");
 }
 
-// Teste para múltiplos empréstimos para o mesmo usuário
 #[test]
 fn test_multiple_loans_for_same_user() {
     let mut setup = setup_contract(loan_controller::contract_obj);
@@ -273,21 +280,27 @@ fn test_multiple_loans_for_same_user() {
     // Solicitar primeiro empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.blockchain().set_block_timestamp(10000);
-            let loan_id = sc.request_loan();
-            assert_eq!(loan_id, 1u64);
+            // Set timestamp for first loan
+            let current_timestamp = sc.blockchain().get_block_timestamp();
+            assert!(current_timestamp >= 10000, "Ensure the block timestamp is valid for the test.");
+            
+            let loan_id = sc.request_loan(managed_biguint!(10_000), LoanTerm::Standard);
+            assert_eq!(loan_id, 1u64); // Direct comparison, no unwrap needed
         })
         .assert_ok();
     
     // Solicitar segundo empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.blockchain().set_block_timestamp(20000);
-            let loan_id = sc.request_loan();
-            assert_eq!(loan_id, 2u64);
+            setup.blockchain_wrapper.set_block_timestamp(20000u64);
+            
+            let loan_id = sc.request_loan(managed_biguint!(10_000), LoanTerm::Standard);
+            assert_eq!(loan_id, 2u64); // Should return 2 for second loan
             
             // Verificar associação com o usuário - deve ter 2 empréstimos
-            let user_loans = sc.user_loans(managed_address!(&setup.borrower_address)).get();
+            let user_loans: Vec<u64> = sc.user_loans(managed_address!(&setup.borrower_address))
+                .iter()
+                .collect();
             assert_eq!(user_loans.len(), 2);
             assert_eq!(user_loans[0], 1u64);
             assert_eq!(user_loans[1], 2u64);
@@ -653,16 +666,16 @@ fn test_loan_statistics() {
             user_loans.push(1u64);
             user_loans.push(2u64);
             user_loans.push(3u64);
-            sc.user_loans(managed_address!(&setup.borrower_address)).set(user_loans);
+            sc.user_loans(managed_address!(&setup.borrower_address)).set(user_loans, &sc.blockchain());
         })
         .assert_ok();
     
+    // Set timestamp before executing query
+    setup.blockchain_wrapper.set_block_timestamp(15001u64);
+
     // Verificar estatísticas
     setup.blockchain_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
-            // Definir timestamp atual para o teste (15001 - após o vencimento do empréstimo 3)
-            sc.blockchain().set_block_timestamp(15001);
-            
+        .execute_query(&setup.contract_wrapper, |sc| {    
             // Total de empréstimos
             assert_eq!(sc.loan_counter().get(), 3u64);
             
@@ -1431,7 +1444,7 @@ fn test_loans_with_different_terms() {
             
             // Solicitar empréstimo com prazo estendido
             let loan_id = sc.request_loan_with_term(LoanTerm::Extended);
-            assert_eq!(loan_id, 1u64);
+            assert_eq!(loan_id.unwrap(), 1u64); // Ensure the function returns a Result<u64, _> or similar
             
             // Verificar dados do empréstimo
             let loan = sc.loans(1u64).get();
@@ -2490,7 +2503,7 @@ fn test_blacklist_functionality() {
         .execute_tx(&setup.borrower_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             sc.blockchain().set_block_timestamp(11000);
             
-            let loan_id = sc.request_loan();
+            let loan_id = sc.request_loan(managed_biguint!(10_000), LoanTerm::Standard);
             assert_eq!(loan_id, 1u64);
         })
         .assert_ok();

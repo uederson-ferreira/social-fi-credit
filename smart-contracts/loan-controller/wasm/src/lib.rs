@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            2
+// Endpoints:                           48
 // Async Callback:                       1
-// Total number of exported functions:   4
+// Total number of exported functions:  50
 
 #![no_std]
 
@@ -20,6 +20,52 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         requestLoan => request_loan
         repayLoan => repay_loan
+        set_min_interest_rate => set_min_interest_rate
+        set_max_interest_rate => set_max_interest_rate
+        getMinInterestRate => get_min_interest_rate
+        getMaxInterestRate => get_max_interest_rate
+        set_mock_timestamp => set_mock_timestamp
+        get_block_timestamp => get_block_timestamp
+        set_max_active_loans => set_max_active_loans
+        getMaxActiveLoans => get_max_active_loans
+        requestLoanSync => request_loan_sync
+        mark_expired_loans => mark_expired_loans
+        setExtensionFeePercent => set_extension_fee_percent
+        getExtensionFeePercent => get_extension_fee_percent
+        setLateFeeDailyRate => set_late_fee_daily_rate
+        getLateFeeDailyRate => get_late_fee_daily_rate
+        setCollateralRatio => set_collateral_ratio
+        setLiquidationDiscount => set_liquidation_discount
+        getCollateralRatio => get_collateral_ratio
+        getLiquidationDiscount => get_liquidation_discount
+        add_investor => add_investor
+        getInvestorShares => get_investor_shares
+        getTotalInvestorShares => get_total_investor_shares
+        set_standard_loan_term_days => set_standard_loan_term_days
+        set_extended_loan_term_days => set_extended_loan_term_days
+        set_max_loan_term_days => set_max_loan_term_days
+        reputation_check_callback => reputation_check_callback
+        getStandardLoanTermDays => get_standard_loan_term_days
+        getExtendedLoanTermDays => get_extended_loan_term_days
+        getMaxLoanTermDays => get_max_loan_term_days
+        set_interest_rate_base => set_interest_rate_base
+        set_extended_term_rate_multiplier => set_extended_term_rate_multiplier
+        set_max_term_rate_multiplier => set_max_term_rate_multiplier
+        set_min_required_score => set_min_required_score
+        getMinRequiredScore => get_min_required_score
+        getInterestRateBase => get_interest_rate_base
+        getExtendedTermRateMultiplier => get_extended_term_rate_multiplier
+        getMaxTermRateMultiplier => get_max_term_rate_multiplier
+        calculateDueDateSafely => calculate_due_date_safely
+        calculateLoanAmountWithLimits => calculate_loan_amount_with_limits
+        getActiveLoansCount => get_active_loans_count
+        set_operation_timelock => set_operation_timelock
+        getOperationTimelock => get_operation_timelock
+        initiateContractDestruction => initiate_contract_destruction
+        executeContractDestruction => execute_contract_destruction
+        initiateContractDestructionV2 => initiate_contract_destruction_v2
+        confirmContractDestructionV2 => confirm_contract_destruction_v2
+        cancelContractDestructionV2 => cancel_contract_destruction_v2
     )
 }
 

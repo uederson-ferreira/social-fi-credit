@@ -9,6 +9,11 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+use multiversx_sc::{
+    api::ManagedTypeApi,
+    derive::ManagedVecItem,
+};
+
 mod reputation_score_proxy {
     multiversx_sc::imports!();
     
@@ -25,6 +30,63 @@ mod reputation_score_proxy {
     }
 }
 
+
+/*Status do empréstimo*/
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Debug, Clone, ManagedVecItem)]
+pub enum LoanStatus {
+    Active,
+    Repaid,
+    Defaulted,
+}
+
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ParamType {
+    MinScore,
+    MaxScore,
+    InterestRate,
+}
+
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Debug, Clone, Copy, ManagedVecItem)]
+pub enum LoanTerm {
+    Standard,    //  30 dias
+    Extended,    //  90 dias
+    Short,       //  15 dias
+    Maximum      // 180 dias
+}
+
+impl LoanTerm {
+    fn get_days(&self) -> u64 {
+        match self {
+            LoanTerm::Standard => 30u64,
+            LoanTerm::Extended => 90u64,
+            LoanTerm::Short => 15u64,
+            LoanTerm::Maximum => 180u64, // Add this match arm for the Maximum variant
+        }
+    }
+}
+
+#[type_abi]
+#[derive(Debug, PartialEq, Eq, Clone, TopEncode, TopDecode)]
+pub struct ParameterChange {
+    pub value: u64,       // The new value for the parameter
+    pub timestamp: u64,   // The timestamp when the change was requested
+}
+// Dados do empréstimo
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
+pub struct Loan<M: ManagedTypeApi> {
+    pub borrower: ManagedAddress<M>,
+    pub amount: BigUint<M>,
+    pub repayment_amount: BigUint<M>,
+    pub interest_rate: u64,
+    pub creation_timestamp: u64,
+    pub due_timestamp: u64,
+    pub status: LoanStatus,
+}
+
+
 #[multiversx_sc::contract]
 pub trait LoanController {
     // Inicializa o contrato com os parâmetros básicos
@@ -40,19 +102,34 @@ pub trait LoanController {
         self.min_required_score().set(min_required_score);
         self.interest_rate_base().set(interest_rate_base);
         self.base_loan_amount().set(base_loan_amount);
+        // Configurar prazos padrão
+        self.standard_term_days().set(30u64);
+        self.extended_term_days().set(90u64);
+        self.short_term_days().set(15u64);
+    }
+
+    #[only_owner]
+    #[endpoint(setLoanTerms)]
+    fn set_loan_terms(&self, standard: u64, extended: u64, short: u64) {
+        require!(standard > 0 && extended > 0 && short > 0, "Termos devem ser maiores que zero");
+        require!(extended > standard && standard > short, "Termos devem seguir a hierarquia");
+        
+        self.standard_term_days().set(standard);
+        self.extended_term_days().set(extended);
+        self.short_term_days().set(short);
     }
 
     // Solicita um empréstimo
     #[payable("*")]
     #[endpoint(requestLoan)]
-    fn request_loan(&self, amount: BigUint, duration_days: u64) {
+    fn request_loan(&self, amount: BigUint, term: LoanTerm) {
         let caller = self.blockchain().get_caller();
-
-        // Verifica se o usuário tem pontuação suficiente
-        let rs_address = self.reputation_score_address().get();
         
-        // Obtém a elegibilidade do usuário para o empréstimo
-        // Vamos verificar a elegibilidade do usuário para o empréstimo
+        // Converter o termo para dias
+        let duration_days = term.get_days();
+        
+        // Verificar se o usuário tem pontuação suficiente
+        let rs_address = self.reputation_score_address().get();
         let min_score = self.min_required_score().get();
         
         self.reputation_score_proxy(rs_address.clone())
@@ -60,11 +137,11 @@ pub trait LoanController {
             .with_callback(self.callbacks().check_eligibility_callback(
                 caller.clone(),
                 amount.clone(),
-                duration_days
+                term
             ))
             .call_and_exit();
     }
-    
+
     // Paga um empréstimo
     #[payable("*")]
     #[endpoint(repayLoan)]
@@ -234,24 +311,6 @@ pub trait LoanController {
         self.liquidation_discount().set(discount);
     }
 
-    // #[endpoint]
-    // fn request_loan(&self, amount: BigUint, interest_rate: u64) -> u64 {
-    //     let loan_id = self.loan_counter().get() + 1;
-    //     self.loan_counter().set(loan_id);
-
-    //     let loan = Loan {
-    //         borrower: self.blockchain().get_caller(),
-    //         amount,
-    //         interest_rate,
-    //         status: LoanStatus::Active,
-    //         creation_timestamp: self.blockchain().get_block_timestamp(),
-    //         due_timestamp: self.blockchain().get_block_timestamp() + 30 * 24 * 60 * 60, // 30 days
-    //     };
-
-    //     self.loans(loan_id).set(loan);
-    //     loan_id
-    // }
-
     // Views para consulta
     #[view(getCollateralRatio)]
     fn get_collateral_ratio(&self) -> u64 {
@@ -345,6 +404,110 @@ pub trait LoanController {
         self.min_required_score().set(score);
     }
 
+    #[endpoint(initiateContractDestruction)]
+    fn initiate_contract_destruction(&self) {
+        // Only owner can destroy the contract
+        require!(
+            self.blockchain().get_caller() == self.blockchain().get_owner_address(),
+            "Only owner can initiate contract destruction"
+        );
+
+        // Optional: Add a timelock for safety
+        let current_timestamp = self.blockchain().get_block_timestamp();
+        self.destruction_timelock().set(current_timestamp + 86400); // 24 hour delay
+    }
+
+    // Add method to execute the destruction after timelock
+    #[endpoint(executeContractDestruction)]
+    fn execute_contract_destruction(&self) {
+        // Only owner can execute destruction
+        require!(
+            self.blockchain().get_caller() == self.blockchain().get_owner_address(),
+            "Only owner can execute contract destruction"
+        );
+
+        // Check if timelock has passed
+        let current_timestamp = self.blockchain().get_block_timestamp();
+        let destruction_time = self.destruction_timelock().get();
+        require!(
+            current_timestamp >= destruction_time,
+            "Destruction timelock has not expired"
+        );
+
+        // Perform contract cleanup and destruction
+        self.cleanup_and_destroy();
+    }
+
+    // Helper method for cleanup
+    fn cleanup_and_destroy(&self) {
+        // Add cleanup logic here
+        // For example: return funds to owner, clear storage, etc.
+        self.send()
+            .direct_egld(&self.blockchain().get_owner_address(), &self.blockchain().get_balance(&self.blockchain().get_sc_address()));
+    }
+    
+
+    // Renomear de initiate_contract_destruction para initiate_contract_destruction_v2
+    #[endpoint(initiateContractDestructionV2)]
+    fn initiate_contract_destruction_v2(&self) {
+        require!(
+            self.blockchain().get_caller() == self.blockchain().get_owner_address(),
+            "Only owner can initiate contract destruction"
+        );
+        self.destruction_pending_v2().set(true);
+        self.destruction_confirmation_count().set(1u32);
+    }
+
+    // Renomear de confirm_contract_destruction para confirm_contract_destruction_v2
+    #[endpoint(confirmContractDestructionV2)]
+    fn confirm_contract_destruction_v2(&self) {
+        require!(
+            self.blockchain().get_caller() == self.blockchain().get_owner_address(),
+            "Only owner can confirm contract destruction"
+        );
+        let count = self.destruction_confirmation_count().get();
+        self.destruction_confirmation_count().set(count + 1);
+    }
+
+    // Renomear de cancel_contract_destruction para cancel_contract_destruction_v2
+    #[endpoint(cancelContractDestructionV2)]
+    fn cancel_contract_destruction_v2(&self) {
+        require!(
+            self.blockchain().get_caller() == self.blockchain().get_owner_address(),
+            "Only owner can cancel contract destruction"
+        );
+        self.destruction_pending_v2().set(false);
+        self.destruction_timelock().set(0u64);
+    }
+
+    #[endpoint(requestLoanWithTerm)]
+    fn request_loan_with_term(&self, term: LoanTerm) -> u64 {
+        let loan_id = self.loan_counter().get() + 1;
+        self.loan_counter().set(loan_id);
+
+        let due_date = match term {
+            LoanTerm::Standard => self.blockchain().get_block_timestamp() + 30 * 24 * 60 * 60,
+            LoanTerm::Extended => self.blockchain().get_block_timestamp() + 90 * 24 * 60 * 60,
+            LoanTerm::Short => self.blockchain().get_block_timestamp() + 15 * 24 * 60 * 60,
+            LoanTerm::Maximum => self.blockchain().get_block_timestamp() + 180 * 24 * 60 * 60,
+        };
+
+        let loan = Loan {
+            borrower: self.blockchain().get_caller(),
+            amount: self.base_loan_amount().get(),
+            repayment_amount: self.base_loan_amount().get() + self.calculate_interest_rate(800u64),
+            interest_rate: self.calculate_interest_rate(800u64),
+            creation_timestamp: self.blockchain().get_block_timestamp(),
+            due_timestamp: due_date,
+            status: LoanStatus::Active,
+        };
+
+        self.loans(loan_id).set(&loan);
+        self.user_loans(self.blockchain().get_caller()).push(&loan_id);
+
+        loan_id
+    }
+
     #[view(getMinRequiredScore)]
     fn get_min_required_score(&self) -> u64 {
         self.min_required_score().get()
@@ -406,6 +569,41 @@ pub trait LoanController {
     fn get_operation_timelock(&self) -> u64 {
         self.operation_timelock().get()
     }
+
+    #[view(getLoanDetails)]
+    fn get_loan_details(&self, loan_id: u64) -> Option<Loan<Self::Api>> {
+        if loan_id == 0 || loan_id > self.loan_counter().get() {
+            return None;
+        }
+        
+        Some(self.loans(loan_id).get())
+    }
+
+    #[view(calculateDueDate)]
+    fn calculate_due_date(&self, term: LoanTerm) -> u64 {
+        let current_timestamp = self.blockchain().get_block_timestamp();
+        let duration_seconds = term.get_days() * 24u64 * 60u64 * 60u64;
+        current_timestamp + duration_seconds
+    }
+
+    fn calculate_interest_rate_for_term(&self, base_rate: u64, term: LoanTerm) -> u64 {
+        match term {
+            LoanTerm::Standard => base_rate,
+            LoanTerm::Extended => base_rate * 12 / 10, // +20% para prazo estendido
+            LoanTerm::Short => base_rate * 8 / 10,     // -20% para prazo curto
+            LoanTerm::Maximum => base_rate * 15 / 10,  // +50% para prazo máximo
+        }
+    }
+
+    #[view(getLoanTermDays)]
+    fn get_loan_term_days(&self, term: LoanTerm) -> u64 {
+        term.get_days()
+    }
+
+    #[view(calculateInterestRateForTerm)]
+    fn get_interest_rate_for_term(&self, base_rate: u64, term: LoanTerm) -> u64 {
+        self.calculate_interest_rate_for_term(base_rate, term)
+    }
     //================================================
 
     // Callbacks para processamento assíncrono
@@ -415,7 +613,7 @@ pub trait LoanController {
         #[call_result] result: ManagedAsyncCallResult<bool>,
         caller: ManagedAddress,
         amount: BigUint,
-        duration_days: u64,
+        term: LoanTerm,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(is_eligible) => {
@@ -433,7 +631,7 @@ pub trait LoanController {
                     .with_callback(self.callbacks().check_amount_callback(
                         caller,
                         amount,
-                        duration_days
+                        term
                     ))
                     .call_and_exit();
             },
@@ -449,7 +647,7 @@ pub trait LoanController {
         #[call_result] result: ManagedAsyncCallResult<BigUint>,
         caller: ManagedAddress,
         amount: BigUint,
-        duration_days: u64,
+        term: LoanTerm,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(max_amount) => {
@@ -466,7 +664,7 @@ pub trait LoanController {
                     .with_callback(self.callbacks().process_loan_callback(
                         caller,
                         amount,
-                        duration_days
+                        term
                     ))
                     .call_and_exit();
             },
@@ -482,38 +680,36 @@ pub trait LoanController {
         #[call_result] result: ManagedAsyncCallResult<u64>,
         caller: ManagedAddress,
         amount: BigUint,
-        duration_days: u64,
+        term: LoanTerm,
     ) {
         match result {
             ManagedAsyncCallResult::Ok(user_score) => {
-                // Calcula a taxa de juros com base na pontuação do usuário
-                let interest_rate = self.calculate_interest_rate(user_score);
-        
+                let base_rate = self.calculate_interest_rate(user_score);
+                let term_adjusted_rate = self.calculate_interest_rate_for_term(base_rate, term);
+                
                 // Calcula o valor total a ser pago
-                let interest_amount = &amount * &BigUint::from(interest_rate) / &BigUint::from(10000u32);
+                let interest_amount = &amount * &BigUint::from(term_adjusted_rate) / &BigUint::from(10000u32);
                 let repayment_amount = &amount + &interest_amount;
-        
-                // Cria o registro do empréstimo
+                
                 let loan_id = self.loan_counter().get();
                 self.loan_counter().set(loan_id + 1);
-        
+                
                 let current_timestamp = self.blockchain().get_block_timestamp();
-                let due_timestamp = current_timestamp + duration_days * 86400;
-        
+                let due_timestamp = self.calculate_due_date(term);
+                
                 self.loans(loan_id).set(Loan {
                     borrower: caller.clone(),
                     amount: amount.clone(),
                     repayment_amount,
-                    interest_rate,
+                    interest_rate: term_adjusted_rate,
                     creation_timestamp: current_timestamp,
                     due_timestamp,
                     status: LoanStatus::Active,
                 });
-        
-                // Registra o empréstimo para consulta do usuário
+                
                 self.user_loans(caller.clone()).push(&loan_id);
-        
-                // Transfere os fundos para o usuário
+                
+                // Transfere os fundos
                 let token_id = self.call_value().egld_or_single_esdt().token_identifier;
                 self.send().direct(&caller, &token_id, 0, &amount);
             },
@@ -626,42 +822,31 @@ pub trait LoanController {
 
     #[storage_mapper("pending_parameter_changes_by_key")]
     fn pending_parameter_changes_by_key(&self, param_key: BigUint) -> SingleValueMapper<ParameterChange>;
+    
+    #[storage_mapper("standard_term_days")]
+    fn standard_term_days(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("extended_term_days")]
+    fn extended_term_days(&self) -> SingleValueMapper<u64>;
+
+    #[storage_mapper("short_term_days")]
+    fn short_term_days(&self) -> SingleValueMapper<u64>;
+
+    // Add a storage mapper for the destruction timelock
+    #[storage_mapper("destruction_timelock")]
+    fn destruction_timelock(&self) -> SingleValueMapper<u64>;
+
+    // Renomear de destruction_pending para destruction_pending_v2
+    #[storage_mapper("destruction_pending_v2")]
+    fn destruction_pending_v2(&self) -> SingleValueMapper<bool>;
+
+    // Add storage mapper for destruction confirmation count
+    #[storage_mapper("destruction_confirmation_count")]
+    fn destruction_confirmation_count(&self) -> SingleValueMapper<u32>;
+
     //=====================================================================
 
     // Proxy para o contrato ReputationScore
     #[proxy]
     fn reputation_score_proxy(&self, address: ManagedAddress) -> reputation_score_proxy::Proxy<Self::Api>;
-}
-
-/*Status do empréstimo*/
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Debug, Clone)]
-pub enum LoanStatus {
-    Active,
-    Repaid,
-    Defaulted,
-}
-#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi, Debug, PartialEq, Eq, Clone, Copy)]
-pub enum ParamType {
-    MinScore,
-    MaxScore,
-    InterestRate,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, TopEncode, TopDecode, TypeAbi)]
-pub struct ParameterChange {
-    pub value: u64,       // The new value for the parameter
-    pub timestamp: u64,   // The timestamp when the change was requested
-}
-// Dados do empréstimo
-#[type_abi]
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
-pub struct Loan<M: ManagedTypeApi> {
-    pub borrower: ManagedAddress<M>,
-    pub amount: BigUint<M>,
-    pub repayment_amount: BigUint<M>,
-    pub interest_rate: u64,
-    pub creation_timestamp: u64,
-    pub due_timestamp: u64,
-    pub status: LoanStatus,
 }

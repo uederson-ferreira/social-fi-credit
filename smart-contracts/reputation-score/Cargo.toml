@@ -1,4 +1,3 @@
-#Cargo do reputation-score presente em smart-contracts/reputation-score/Cargo.toml
 [package]
 name = "reputation-score"
 version = "0.1.0"
@@ -9,13 +8,14 @@ publish = false
 path = "src/reputation_score.rs"
 
 [dependencies]
-multiversx-sc = "0.57.1"
+multiversx-sc = { version = "0.57.1", features = ["alloc"] }
 common-types = { path = "../common-types" }
 getrandom = { version = "0.2.10", features = ["js"] }
-rand = "0.8.5"
-num-traits = "0.2"
-
+rand = { version = "0.8.5", default-features = false }
 
 [dev-dependencies]
 multiversx-sc-scenario = "0.57.1"
 rand = { version = "0.8", features = ["std_rng"] }
+
+[features]
+default = []

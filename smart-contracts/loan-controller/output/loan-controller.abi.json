@@ -70,6 +70,492 @@
                 }
             ],
             "outputs": []
+        },
+        {
+            "name": "set_min_interest_rate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_max_interest_rate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getMinInterestRate",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getMaxInterestRate",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_mock_timestamp",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "timestamp",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "get_block_timestamp",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_max_active_loans",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "max_loans",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getMaxActiveLoans",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "requestLoanSync",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "duration_days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "mark_expired_loans",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "setExtensionFeePercent",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "fee_percent",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getExtensionFeePercent",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "setLateFeeDailyRate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getLateFeeDailyRate",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "setCollateralRatio",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "ratio",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setLiquidationDiscount",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "discount",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getCollateralRatio",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getLiquidationDiscount",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "add_investor",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "investor",
+                    "type": "Address"
+                },
+                {
+                    "name": "shares",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getInvestorShares",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "investor",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getTotalInvestorShares",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_standard_loan_term_days",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_extended_loan_term_days",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_max_loan_term_days",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "reputation_check_callback",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "user_address",
+                    "type": "Address"
+                },
+                {
+                    "name": "score",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getStandardLoanTermDays",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getExtendedLoanTermDays",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getMaxLoanTermDays",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_interest_rate_base",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_extended_term_rate_multiplier",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "multiplier",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_max_term_rate_multiplier",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "multiplier",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_min_required_score",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "score",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getMinRequiredScore",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getInterestRateBase",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getExtendedTermRateMultiplier",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getMaxTermRateMultiplier",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "calculateDueDateSafely",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "term_in_seconds",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "calculateLoanAmountWithLimits",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "base_amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getActiveLoansCount",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_operation_timelock",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "timelock",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getOperationTimelock",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "initiateContractDestruction",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "executeContractDestruction",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "initiateContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "confirmContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "cancelContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
         }
     ],
     "esdtAttributes": [],

@@ -78,7 +78,7 @@ fn test_init() {
             );
             
             // Verificar oferta total inicial é zero
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(0));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(0));
         })
         .assert_ok();
 }

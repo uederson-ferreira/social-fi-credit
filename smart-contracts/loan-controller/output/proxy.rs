@@ -101,4 +101,515 @@ where
             .argument(&loan_id)
             .original_result()
     }
+
+    pub fn set_min_interest_rate<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_min_interest_rate")
+            .argument(&rate)
+            .original_result()
+    }
+
+    pub fn set_max_interest_rate<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_max_interest_rate")
+            .argument(&rate)
+            .original_result()
+    }
+
+    pub fn get_min_interest_rate(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMinInterestRate")
+            .original_result()
+    }
+
+    pub fn get_max_interest_rate(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxInterestRate")
+            .original_result()
+    }
+
+    pub fn set_mock_timestamp<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        timestamp: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_mock_timestamp")
+            .argument(&timestamp)
+            .original_result()
+    }
+
+    pub fn get_block_timestamp(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("get_block_timestamp")
+            .original_result()
+    }
+
+    pub fn set_max_active_loans<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        max_loans: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_max_active_loans")
+            .argument(&max_loans)
+            .original_result()
+    }
+
+    pub fn get_max_active_loans(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxActiveLoans")
+            .original_result()
+    }
+
+    pub fn request_loan_sync<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        amount: Arg0,
+        duration_days: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("requestLoanSync")
+            .argument(&amount)
+            .argument(&duration_days)
+            .original_result()
+    }
+
+    pub fn mark_expired_loans(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("mark_expired_loans")
+            .original_result()
+    }
+
+    pub fn set_extension_fee_percent<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        fee_percent: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setExtensionFeePercent")
+            .argument(&fee_percent)
+            .original_result()
+    }
+
+    pub fn get_extension_fee_percent(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getExtensionFeePercent")
+            .original_result()
+    }
+
+    pub fn set_late_fee_daily_rate<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setLateFeeDailyRate")
+            .argument(&rate)
+            .original_result()
+    }
+
+    pub fn get_late_fee_daily_rate(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getLateFeeDailyRate")
+            .original_result()
+    }
+
+    pub fn set_collateral_ratio<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        ratio: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setCollateralRatio")
+            .argument(&ratio)
+            .original_result()
+    }
+
+    pub fn set_liquidation_discount<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        discount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setLiquidationDiscount")
+            .argument(&discount)
+            .original_result()
+    }
+
+    pub fn get_collateral_ratio(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCollateralRatio")
+            .original_result()
+    }
+
+    pub fn get_liquidation_discount(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getLiquidationDiscount")
+            .original_result()
+    }
+
+    pub fn add_investor<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        investor: Arg0,
+        shares: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("add_investor")
+            .argument(&investor)
+            .argument(&shares)
+            .original_result()
+    }
+
+    pub fn get_investor_shares<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        investor: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getInvestorShares")
+            .argument(&investor)
+            .original_result()
+    }
+
+    pub fn get_total_investor_shares(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalInvestorShares")
+            .original_result()
+    }
+
+    pub fn set_standard_loan_term_days<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        days: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_standard_loan_term_days")
+            .argument(&days)
+            .original_result()
+    }
+
+    pub fn set_extended_loan_term_days<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        days: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_extended_loan_term_days")
+            .argument(&days)
+            .original_result()
+    }
+
+    pub fn set_max_loan_term_days<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        days: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_max_loan_term_days")
+            .argument(&days)
+            .original_result()
+    }
+
+    pub fn reputation_check_callback<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        user_address: Arg0,
+        score: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("reputation_check_callback")
+            .argument(&user_address)
+            .argument(&score)
+            .original_result()
+    }
+
+    pub fn get_standard_loan_term_days(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getStandardLoanTermDays")
+            .original_result()
+    }
+
+    pub fn get_extended_loan_term_days(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getExtendedLoanTermDays")
+            .original_result()
+    }
+
+    pub fn get_max_loan_term_days(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxLoanTermDays")
+            .original_result()
+    }
+
+    pub fn set_interest_rate_base<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_interest_rate_base")
+            .argument(&rate)
+            .original_result()
+    }
+
+    pub fn set_extended_term_rate_multiplier<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        multiplier: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_extended_term_rate_multiplier")
+            .argument(&multiplier)
+            .original_result()
+    }
+
+    pub fn set_max_term_rate_multiplier<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        multiplier: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_max_term_rate_multiplier")
+            .argument(&multiplier)
+            .original_result()
+    }
+
+    pub fn set_min_required_score<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        score: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_min_required_score")
+            .argument(&score)
+            .original_result()
+    }
+
+    pub fn get_min_required_score(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMinRequiredScore")
+            .original_result()
+    }
+
+    pub fn get_interest_rate_base(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getInterestRateBase")
+            .original_result()
+    }
+
+    pub fn get_extended_term_rate_multiplier(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getExtendedTermRateMultiplier")
+            .original_result()
+    }
+
+    pub fn get_max_term_rate_multiplier(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxTermRateMultiplier")
+            .original_result()
+    }
+
+    pub fn calculate_due_date_safely<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        term_in_seconds: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("calculateDueDateSafely")
+            .argument(&term_in_seconds)
+            .original_result()
+    }
+
+    pub fn calculate_loan_amount_with_limits<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        base_amount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("calculateLoanAmountWithLimits")
+            .argument(&base_amount)
+            .original_result()
+    }
+
+    pub fn get_active_loans_count(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getActiveLoansCount")
+            .original_result()
+    }
+
+    pub fn set_operation_timelock<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        timelock: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_operation_timelock")
+            .argument(&timelock)
+            .original_result()
+    }
+
+    pub fn get_operation_timelock(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getOperationTimelock")
+            .original_result()
+    }
+
+    pub fn initiate_contract_destruction(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initiateContractDestruction")
+            .original_result()
+    }
+
+    pub fn execute_contract_destruction(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("executeContractDestruction")
+            .original_result()
+    }
+
+    pub fn initiate_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initiateContractDestructionV2")
+            .original_result()
+    }
+
+    pub fn confirm_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("confirmContractDestructionV2")
+            .original_result()
+    }
+
+    pub fn cancel_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancelContractDestructionV2")
+            .original_result()
+    }
 }
