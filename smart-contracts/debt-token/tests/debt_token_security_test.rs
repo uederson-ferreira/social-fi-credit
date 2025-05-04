@@ -3,6 +3,7 @@
 // Descrição: Testes de segurança para o contrato DebtToken
 // ==========================================================================
 
+use multiversx_sc::contract_base::ContractBase;
 use multiversx_sc::types::{Address, BigUint};
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,

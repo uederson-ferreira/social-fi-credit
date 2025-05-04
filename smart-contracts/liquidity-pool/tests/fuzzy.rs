@@ -80,6 +80,14 @@ where
         })
         .assert_ok();
     
+    // Definir endereços dos contratos relacionados
+    blockchain_wrapper
+        .execute_tx(&owner_address, &contract_wrapper, &rust_zero, |sc| {
+            sc.set_debt_token_address(managed_address!(&debt_token_address));
+            sc.set_lp_token_address(managed_address!(&lp_token_address));
+        })
+        .assert_ok();
+    
     ContractSetup {
         blockchain_wrapper,
         owner_address,
@@ -90,6 +98,17 @@ where
         borrowers,
         contract_wrapper,
     }
+}
+
+// Função de configuração simples para testes individuais
+fn setup_contract<ContractObjBuilder>(
+    builder: ContractObjBuilder,
+) -> ContractSetup<ContractObjBuilder>
+where
+    ContractObjBuilder: 'static + Copy + Fn() -> liquidity_pool::ContractObj<DebugApi>,
+{
+    // Reutilizamos a função de configuração fuzzy com um número mínimo de provedores e tomadores
+    setup_fuzzy_contract(builder, 1, 1)
 }
 
 // Função para gerar um endereço aleatório
@@ -122,7 +141,7 @@ fn test_deposit_withdraw_fuzzy() {
                 sc.deposit_funds();
                 
                 // Simular emissão de tokens LP
-                sc.lp_tokens_minted_storage(managed_address!(provider), managed_biguint!(amount));
+                sc.lp_tokens_minted_endpoint(managed_address!(provider), managed_biguint!(amount));
             })
             .assert_ok();
         
@@ -155,7 +174,7 @@ fn test_deposit_withdraw_fuzzy() {
                 setup.blockchain_wrapper
                     .execute_tx(provider, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
                         // Simular queima de tokens LP
-                        sc.lp_tokens_burned(managed_address!(provider), managed_biguint!(amount));
+                        sc.lp_tokens_burned_endpoint(managed_address!(provider), managed_biguint!(amount));
                         
                         // Retirar
                         sc.withdraw(managed_biguint!(amount));
@@ -229,7 +248,7 @@ fn test_borrow_repay_fuzzy() {
                     );
                     
                     // Simular emissão de tokens de dívida
-                    sc.debt_tokens_minted(managed_address!(borrower), managed_biguint!(amount));
+                    sc.debt_tokens_minted_endpoint(managed_address!(borrower), managed_biguint!(amount));
                 })
                 .assert_ok();
             
@@ -242,8 +261,8 @@ fn test_borrow_repay_fuzzy() {
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
             // Converter o valor retornado pelo SC para BigUint normal
-            let sc_liquidity = sc.total_borrows().get().to_bigint().unwrap();
-            assert_eq!(sc_liquidity, total_borrows);
+            let sc_borrows = sc.total_borrows().get().to_bigint().unwrap();
+            assert_eq!(sc_borrows, total_borrows);
         })
         .assert_ok();
     
@@ -263,7 +282,7 @@ fn test_borrow_repay_fuzzy() {
                 setup.blockchain_wrapper
                     .execute_tx(borrower, &setup.contract_wrapper, &rust_biguint!(amount), |sc| {
                         // Simular queima de tokens de dívida
-                        sc.debt_tokens_burned(managed_address!(borrower), managed_biguint!(amount));
+                        sc.debt_tokens_burned_endpoint(managed_address!(borrower), managed_biguint!(amount));
                         
                         // Pagar
                         sc.repay();
@@ -343,7 +362,7 @@ fn test_interest_distribution_fuzzy() {
                 sc.deposit_funds();
                 
                 // Simular emissão de tokens LP
-                sc.lp_tokens_minted_storage(managed_address!(provider), managed_biguint!(amount));
+                sc.lp_tokens_minted_endpoint(managed_address!(provider), managed_biguint!(amount));
             })
             .assert_ok();
         
@@ -409,4 +428,324 @@ fn test_interest_distribution_fuzzy() {
             })
             .assert_ok();
     }
+}
+
+// Teste para funções administrativas de pause/unpause
+#[test]
+fn test_pause_unpause() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Verificar estado inicial (não pausado)
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused(), false);
+        })
+        .assert_ok();
+    
+    // Pausar o contrato
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.pause();
+        })
+        .assert_ok();
+    
+    // Verificar que está pausado
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused(), true);
+        })
+        .assert_ok();
+    
+    // Despausar o contrato
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.unpause();
+        })
+        .assert_ok();
+    
+    // Verificar que está despausado
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.is_paused(), false);
+        })
+        .assert_ok();
+}
+
+// Teste para funções de atualização de parâmetros
+#[test]
+fn test_parameter_updates() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Testar atualização da taxa de juros base
+    let new_base_rate = 1200u64; // 12%
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.set_interest_rate_base(new_base_rate);
+        })
+        .assert_ok();
+    
+    // Verificar valor atualizado
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.interest_rate_base().get(), new_base_rate);
+        })
+        .assert_ok();
+    
+    // Testar atualização da taxa de utilização alvo
+    let new_target_rate = 7500u64; // 75%
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.set_target_utilization_rate(new_target_rate);
+        })
+        .assert_ok();
+    
+    // Verificar valor atualizado
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.target_utilization_rate().get(), new_target_rate);
+        })
+        .assert_ok();
+    
+    // Testar atualização do percentual de reserva
+    let new_reserve_percent = 1500u64; // 15%
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.set_reserve_percent(new_reserve_percent);
+        })
+        .assert_ok();
+    
+    // Verificar valor atualizado
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.reserve_percent().get(), new_reserve_percent);
+        })
+        .assert_ok();
+}
+
+// Teste para a função use_reserves_endpoint
+#[test]
+fn test_use_reserves() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Adicionar liquidez inicial para o primeiro provedor
+    setup.blockchain_wrapper
+        .execute_tx(&setup.providers[0], &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
+            sc.deposit_funds();
+        })
+        .assert_ok();
+    
+    // Simular juros acumulados
+    let interest_amount = 2000u64;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(interest_amount), |sc| {
+            sc.add_accumulated_interest_endpoint(managed_biguint!(interest_amount));
+        })
+        .assert_ok();
+    
+    // Distribuir juros, parte vai para as reservas
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.distribute_interest_endpoint();
+        })
+        .assert_ok();
+    
+    // Verificar valor das reservas
+    let expected_reserves = BigUint::from(interest_amount) * BigUint::from(2000u64) / BigUint::from(10000u64); // 20% dos juros
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.total_reserves().get(), managed_biguint!(expected_reserves));
+        })
+        .assert_ok();
+    
+    // Destino para uso das reservas
+    let reserves_target = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Usar metade das reservas
+    let use_amount = expected_reserves.clone() / BigUint::from(2u64);
+    setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.use_reserves_endpoint(
+                managed_address!(&reserves_target),
+                managed_biguint!(use_amount.clone())
+            );
+        })
+        .assert_ok();
+    
+    // Verificar que as reservas foram reduzidas corretamente
+    let expected_remaining = expected_reserves - use_amount;
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.total_reserves().get(), managed_biguint!(expected_remaining));
+        })
+        .assert_ok();
+}
+
+// Mock do contrato ReputationScore para testes
+struct ReputationScoreMock {}
+
+impl ReputationScoreMock {
+    fn new() -> Self {
+        ReputationScoreMock {}
+    }
+    
+    fn is_eligible_for_loan(&self, _user: &Address, _min_score: u64) -> bool {
+        true // Mock sempre retorna true para testes
+    }
+    
+    fn calculate_max_loan_amount(&self, _user: &Address, base_amount: &BigUint) -> BigUint {
+        base_amount.clone() * BigUint::from(2u64) // Mock dobra o valor base
+    }
+    
+    fn get_user_score(&self, _user: &Address) -> u64 {
+        85u64 // Mock retorna uma pontuação fixa
+    }
+}
+
+// Teste para integração com ReputationScore
+#[test]
+fn test_reputation_score_integration() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Criar um usuário para o teste
+    let test_user = setup.blockchain_wrapper.create_user_account(&rust_biguint!(1000));
+    
+    // Inicializar mock do ReputationScore
+    let reputation_mock = ReputationScoreMock::new();
+    
+    // Simular uma tentativa de empréstimo com verificação de reputação
+    let base_amount = BigUint::from(1000u64);
+    let is_eligible = reputation_mock.is_eligible_for_loan(&test_user, 70u64);
+    let max_loan = if is_eligible {
+        reputation_mock.calculate_max_loan_amount(&test_user, &base_amount)
+    } else {
+        BigUint::zero()
+    };
+    
+    // Verificar valores do mock
+    assert_eq!(is_eligible, true);
+    assert_eq!(max_loan, BigUint::from(2000u64));
+    assert_eq!(reputation_mock.get_user_score(&test_user), 85u64);
+    
+    // Se elegível e com fundos suficientes no pool, executar o empréstimo
+    // Primeiro adiciona liquidez ao pool
+    setup.blockchain_wrapper
+        .execute_tx(&setup.providers[0], &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
+            sc.deposit_funds();
+        })
+        .assert_ok();
+    
+    // Em seguida, faz o empréstimo através do controlador de empréstimos
+    if is_eligible && max_loan > BigUint::zero() {
+        setup.blockchain_wrapper
+            .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+                // Usamos o valor máximo calculado pelo sistema de reputação
+                sc.borrow(
+                    managed_address!(&test_user),
+                    managed_biguint!(max_loan),
+                    1000u64 // 10% de juros
+                );
+            })
+            .assert_ok();
+        
+        // Verificar dívida do usuário
+        setup.blockchain_wrapper
+            .execute_query(&setup.contract_wrapper, |sc| {
+                assert_eq!(sc.get_borrower_debt(managed_address!(&test_user)), managed_biguint!(max_loan));
+            })
+            .assert_ok();
+    }
+}
+
+// Teste para verificar o processo de rendimento pendente
+#[test]
+fn test_process_pending_yield() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Adicionar liquidez inicial
+    let deposit_amount = 10000u64;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.providers[0], &setup.contract_wrapper, &rust_biguint!(deposit_amount), |sc| {
+            sc.deposit_funds();
+        })
+        .assert_ok();
+    
+    // Avançar o tempo em 1 ano para acumular rendimento
+    let seconds_in_year = 31_536_000u64;
+    setup.blockchain_wrapper.add_block_time_cache_advance(seconds_in_year);
+    
+    // Fazer um depósito adicional para acionar o processamento de rendimento pendente
+    setup.blockchain_wrapper
+        .execute_tx(&setup.providers[0], &setup.contract_wrapper, &rust_biguint!(1000), |sc| {
+            sc.deposit_funds();
+        })
+        .assert_ok();
+    
+    // Verificar se o rendimento foi adicionado corretamente
+    // Com yield_percentage de 10 (0.1%), o rendimento esperado após 1 ano é de 0.1% do depósito
+    let expected_yield = BigUint::from(deposit_amount) * BigUint::from(10u64) / BigUint::from(10000u64);
+    
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            let provider_funds = sc.get_provider_funds(managed_address!(&setup.providers[0]));
+            
+            // O valor total deve ser o depósito inicial + depósito adicional + rendimento
+            let expected_total = BigUint::from(deposit_amount) + BigUint::from(1000u64) + expected_yield;
+            assert_eq!(provider_funds.amount, expected_total);
+        })
+        .assert_ok();
+}
+
+// Teste para verificar a atualização da taxa de utilização
+#[test]
+fn test_utilization_rate_update() {
+    let mut setup = setup_contract(liquidity_pool::contract_obj);
+    
+    // Adicionar liquidez inicial
+    let liquidity_amount = 100000u64;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.providers[0], &setup.contract_wrapper, &rust_biguint!(liquidity_amount), |sc| {
+            sc.deposit_funds();
+        })
+        .assert_ok();
+    
+    // Verificar taxa de utilização inicial (deve ser 0)
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.utilization_rate().get(), 0u64);
+        })
+        .assert_ok();
+    
+    // Fazer um empréstimo de 50% da liquidez
+    let borrow_amount = liquidity_amount / 2;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.borrow(
+                managed_address!(&setup.borrowers[0]),
+                managed_biguint!(borrow_amount),
+                1000u64 // 10% de juros
+            );
+        })
+        .assert_ok();
+    
+    // Verificar taxa de utilização após empréstimo (deve ser 5000 = 50%)
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.utilization_rate().get(), 5000u64);
+        })
+        .assert_ok();
+    
+    // Fazer um pagamento de metade do empréstimo
+    let repay_amount = borrow_amount / 2;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.borrowers[0], &setup.contract_wrapper, &rust_biguint!(repay_amount), |sc| {
+            sc.repay();
+        })
+        .assert_ok();
+    
+    // Verificar taxa de utilização após pagamento (deve ser 2500 = 25%)
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.utilization_rate().get(), 2500u64);
+        })
+        .assert_ok();
 }

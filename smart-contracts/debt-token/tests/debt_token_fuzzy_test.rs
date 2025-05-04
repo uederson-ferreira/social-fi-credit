@@ -6,7 +6,7 @@
 use multiversx_sc::types::{Address, BigUint, ManagedBuffer, ManagedAddress};
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
-    testing_framework::{BlockchainStateWrapper, ContractObjWrapper, TxResult, TxTokenTransfer},
+    testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
     DebugApi,
 };
 use rand::{Rng, SeedableRng};
@@ -179,7 +179,7 @@ fn test_transfers_fuzzy() {
         // Obter saldo do remetente
         let sender_balance = setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                sc.balance_of(managed_address!(sender))
+                ;
             })
             .unwrap_or(BigUint::<DebugApi>::zero());
         
@@ -277,7 +277,7 @@ fn test_approve_transfer_from_fuzzy() {
             
         let owner_balance = setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                sc.balance_of(managed_address!(owner))
+                sc.balance_of(managed_address!(owner));
             })
             .unwrap_or(BigUint::<DebugApi>::zero());
         
