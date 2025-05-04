@@ -3,7 +3,9 @@
   "bigIntCmp",
   "bigIntFinishUnsigned",
   "bigIntGetCallValue",
+  "bigIntGetInt64",
   "bigIntGetUnsignedArgument",
+  "bigIntIsInt64",
   "bigIntMul",
   "bigIntSetInt64",
   "bigIntSign",
@@ -29,10 +31,12 @@
   "managedCaller",
   "managedGetMultiESDTCallValue",
   "managedMultiTransferESDTNFTExecute",
+  "managedOwnerAddress",
   "managedSignalError",
   "managedTransferValueExecute",
   "managedWriteLog",
   "signalError",
+  "smallIntFinishSigned",
   "smallIntFinishUnsigned",
   "smallIntGetUnsignedArgument"
 ]

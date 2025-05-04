@@ -3,7 +3,7 @@
 // Descrição: Testes fuzzy com entradas aleatórias para o contrato LiquidityPool
 // ==========================================================================
 
-use multiversx_sc::{imports, types::{Address, BigUint}};
+use multiversx_sc::{types::{Address, BigUint}};
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},

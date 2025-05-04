@@ -93,6 +93,19 @@ where
             .original_result()
     }
 
+    pub fn withdraw<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        amount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdraw")
+            .argument(&amount)
+            .original_result()
+    }
+
     pub fn provide_funds_for_loan<
         Arg0: ProxyArg<BigUint<Env::Api>>,
         Arg1: ProxyArg<TokenIdentifier<Env::Api>>,
@@ -114,6 +127,266 @@ where
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("receiveLoanRepayment")
+            .original_result()
+    }
+
+    pub fn borrow_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("borrow")
+            .original_result()
+    }
+
+    pub fn repay_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("repay")
+            .original_result()
+    }
+
+    pub fn pause(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pause")
+            .original_result()
+    }
+
+    pub fn unpause(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpause")
+            .original_result()
+    }
+
+    pub fn add_accumulated_interest_endpoint<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        amount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("add_accumulated_interest_endpoint")
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn distribute_interest_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeInterest")
+            .original_result()
+    }
+
+    pub fn use_reserves_endpoint<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        target: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("useReserves")
+            .argument(&target)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn lp_tokens_minted_endpoint<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        _provider: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lpTokensMinted")
+            .argument(&_provider)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn lp_tokens_burned_endpoint<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        _provider: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lpTokensBurned")
+            .argument(&_provider)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn debt_tokens_minted_endpoint<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        _borrower: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("debtTokensMinted")
+            .argument(&_borrower)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn debt_tokens_burned_endpoint<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        _borrower: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("debtTokensBurned")
+            .argument(&_borrower)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn calculate_current_interest_rate(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("calculate_current_interest_rate")
+            .original_result()
+    }
+
+    pub fn set_interest_rate_base<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        new_rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_interest_rate_base")
+            .argument(&new_rate)
+            .original_result()
+    }
+
+    pub fn set_target_utilization_rate<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        new_rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_target_utilization_rate")
+            .argument(&new_rate)
+            .original_result()
+    }
+
+    pub fn set_max_utilization_rate<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        new_rate: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_max_utilization_rate")
+            .argument(&new_rate)
+            .original_result()
+    }
+
+    pub fn set_reserve_percent<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        new_percent: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("set_reserve_percent")
+            .argument(&new_percent)
+            .original_result()
+    }
+
+    pub fn set_loan_controller_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setLoanControllerAddress")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn set_debt_token_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setDebtTokenAddress")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn set_lp_token_address<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setLpTokenAddress")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn is_paused(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("is_paused")
+            .original_result()
+    }
+
+    pub fn get_borrower_debt<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        borrower: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBorrowerDebt")
+            .argument(&borrower)
             .original_result()
     }
 

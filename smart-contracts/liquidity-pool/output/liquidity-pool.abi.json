@@ -56,6 +56,17 @@
             "outputs": []
         },
         {
+            "name": "withdraw",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "provideFundsForLoan",
             "mutability": "mutable",
             "inputs": [
@@ -78,6 +89,234 @@
             ],
             "inputs": [],
             "outputs": []
+        },
+        {
+            "name": "borrow",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "repay",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "pause",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "unpause",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "add_accumulated_interest_endpoint",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "distributeInterest",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "useReserves",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "target",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "lpTokensMinted",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "_provider",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "lpTokensBurned",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "_provider",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "debtTokensMinted",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "_borrower",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "debtTokensBurned",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "_borrower",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "calculate_current_interest_rate",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "set_interest_rate_base",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_target_utilization_rate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_max_utilization_rate",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_rate",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "set_reserve_percent",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "new_percent",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setLoanControllerAddress",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setDebtTokenAddress",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setLpTokenAddress",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "is_paused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getBorrowerDebt",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "borrower",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
         },
         {
             "name": "getAnnualYieldPercentage",

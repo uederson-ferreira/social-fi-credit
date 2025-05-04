@@ -1124,6 +1124,9 @@ pub trait LoanController {
         repaid
     }
 
+    
+
+
     //================================================
 
     // Callbacks para processamento assíncrono

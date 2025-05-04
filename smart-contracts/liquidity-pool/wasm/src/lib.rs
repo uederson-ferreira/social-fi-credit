@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            7
+// Endpoints:                           29
 // Async Callback (empty):               1
-// Total number of exported functions:   9
+// Total number of exported functions:  31
 
 #![no_std]
 
@@ -20,8 +20,30 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         depositFunds => deposit_funds
         withdrawFunds => withdraw_funds
+        withdraw => withdraw
         provideFundsForLoan => provide_funds_for_loan
         receiveLoanRepayment => receive_loan_repayment
+        borrow => borrow_endpoint
+        repay => repay_endpoint
+        pause => pause
+        unpause => unpause
+        add_accumulated_interest_endpoint => add_accumulated_interest_endpoint
+        distributeInterest => distribute_interest_endpoint
+        useReserves => use_reserves_endpoint
+        lpTokensMinted => lp_tokens_minted_endpoint
+        lpTokensBurned => lp_tokens_burned_endpoint
+        debtTokensMinted => debt_tokens_minted_endpoint
+        debtTokensBurned => debt_tokens_burned_endpoint
+        calculate_current_interest_rate => calculate_current_interest_rate
+        set_interest_rate_base => set_interest_rate_base
+        set_target_utilization_rate => set_target_utilization_rate
+        set_max_utilization_rate => set_max_utilization_rate
+        set_reserve_percent => set_reserve_percent
+        setLoanControllerAddress => set_loan_controller_address
+        setDebtTokenAddress => set_debt_token_address
+        setLpTokenAddress => set_lp_token_address
+        is_paused => is_paused
+        getBorrowerDebt => get_borrower_debt
         getAnnualYieldPercentage => get_annual_yield_percentage
         getTotalLiquidity => get_total_liquidity
         getProviderFunds => get_provider_funds

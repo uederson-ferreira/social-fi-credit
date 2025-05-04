@@ -1,4 +1,4 @@
-use multiversx_sc::types::{Address, BigUint};
+use multiversx_sc::types::Address;
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
