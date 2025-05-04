@@ -40,6 +40,41 @@
     },
     "endpoints": [
         {
+            "name": "withdrawFunds",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setLoanTerms",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "standard",
+                    "type": "u64"
+                },
+                {
+                    "name": "extended",
+                    "type": "u64"
+                },
+                {
+                    "name": "short",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
             "name": "requestLoan",
             "mutability": "mutable",
             "payableInTokens": [
@@ -51,8 +86,8 @@
                     "type": "BigUint"
                 },
                 {
-                    "name": "duration_days",
-                    "type": "u64"
+                    "name": "term",
+                    "type": "LoanTerm"
                 }
             ],
             "outputs": []
@@ -67,6 +102,252 @@
                 {
                     "name": "loan_id",
                     "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "extendLoanDeadline",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "extra_days",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "provideCollateral",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "withdrawCollateral",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "markLoanDefaulted",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "forfeitCollateral",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "provideCollateralForNewLoan",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "requestLoanWithCollateral",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "cancelLoanRequest",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Leiloar garantia de um empréstimo inadimplente"
+            ],
+            "name": "liquidateCollateralViaAuction",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "partialRepayLoan",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "add_investor",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "investor",
+                    "type": "Address"
+                },
+                {
+                    "name": "shares",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Distribui os juros acumulados entre os investidores, conforme suas participações,",
+                "e então zera o total_interest_earned."
+            ],
+            "name": "distributeProfits",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Remove um investidor e ajusta o total de participações"
+            ],
+            "name": "removeInvestor",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "investor",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Modo de emergência: sacar todo o saldo"
+            ],
+            "name": "emergencyWithdraw",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Lista negra: impede que um usuário solicite empréstimos"
+            ],
+            "name": "addToBlacklist",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Consulta se um usuário está na blacklist"
+            ],
+            "name": "isBlacklisted",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Remove um usuário da blacklist, permitindo que ele solicite empréstimos de novo"
+            ],
+            "name": "removeFromBlacklist",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setMaxLoansPerUser",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "max",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "setMinCollateralAmount",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
                 }
             ],
             "outputs": []
@@ -147,6 +428,16 @@
         },
         {
             "name": "getMaxActiveLoans",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getRepaidLoansCount",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -263,21 +554,6 @@
                     "type": "u64"
                 }
             ]
-        },
-        {
-            "name": "add_investor",
-            "mutability": "mutable",
-            "inputs": [
-                {
-                    "name": "investor",
-                    "type": "Address"
-                },
-                {
-                    "name": "shares",
-                    "type": "u64"
-                }
-            ],
-            "outputs": []
         },
         {
             "name": "getInvestorShares",
@@ -427,6 +703,65 @@
             "outputs": []
         },
         {
+            "name": "initiateContractDestruction",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "executeContractDestruction",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "initiateContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "pauseContract",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "unpauseContract",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "confirmContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "cancelContractDestructionV2",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "requestLoanWithTerm",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "term",
+                    "type": "LoanTerm"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
             "name": "getMinRequiredScore",
             "mutability": "readonly",
             "inputs": [],
@@ -528,37 +863,257 @@
             ]
         },
         {
-            "name": "initiateContractDestruction",
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
+            "name": "getLoanDetails",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Option<Loan>"
+                }
+            ]
         },
         {
-            "name": "executeContractDestruction",
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
+            "name": "calculateDueDate",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "term",
+                    "type": "LoanTerm"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
         },
         {
-            "name": "initiateContractDestructionV2",
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
+            "name": "getLoanTermDays",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "term",
+                    "type": "LoanTerm"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
         },
         {
-            "name": "confirmContractDestructionV2",
-            "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
+            "name": "calculateInterestRateForTerm",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "base_rate",
+                    "type": "u64"
+                },
+                {
+                    "name": "term",
+                    "type": "LoanTerm"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
         },
         {
-            "name": "cancelContractDestructionV2",
-            "mutability": "mutable",
+            "name": "getOverdueLoansCount",
+            "mutability": "readonly",
             "inputs": [],
-            "outputs": []
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getTotalLoanAmount",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getTotalRepaymentAmount",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "isPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "calculateLiquidationValue",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Add these view methods inside the `#[multiversx_sc::contract] pub trait LoanController`:",
+                "Returns all loan IDs associated with a user"
+            ],
+            "name": "getUserLoanHistory",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<u64>"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Returns only the active loan IDs for a user"
+            ],
+            "name": "getUserActiveLoans",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<u64>"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Returns only the repaid loan IDs for a user"
+            ],
+            "name": "getUserRepaidLoans",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "List<u64>"
+                }
+            ]
         }
     ],
     "esdtAttributes": [],
     "hasCallback": true,
-    "types": {}
+    "types": {
+        "Loan": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "borrower",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "repayment_amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "interest_rate",
+                    "type": "u64"
+                },
+                {
+                    "name": "creation_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "due_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "status",
+                    "type": "LoanStatus"
+                }
+            ]
+        },
+        "LoanStatus": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Active",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Repaid",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Defaulted",
+                    "discriminant": 2
+                },
+                {
+                    "name": "Liquidated",
+                    "discriminant": 3
+                }
+            ]
+        },
+        "LoanTerm": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Standard",
+                    "discriminant": 0
+                },
+                {
+                    "name": "Extended",
+                    "discriminant": 1
+                },
+                {
+                    "name": "Short",
+                    "discriminant": 2
+                },
+                {
+                    "name": "Maximum",
+                    "discriminant": 3
+                }
+            ]
+        }
+    }
 }

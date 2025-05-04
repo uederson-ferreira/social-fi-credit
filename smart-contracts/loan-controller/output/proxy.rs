@@ -75,18 +75,49 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn request_loan<
+    pub fn withdraw_funds<
         Arg0: ProxyArg<BigUint<Env::Api>>,
-        Arg1: ProxyArg<u64>,
     >(
         self,
         amount: Arg0,
-        duration_days: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("withdrawFunds")
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn set_loan_terms<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u64>,
+        Arg2: ProxyArg<u64>,
+    >(
+        self,
+        standard: Arg0,
+        extended: Arg1,
+        short: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setLoanTerms")
+            .argument(&standard)
+            .argument(&extended)
+            .argument(&short)
+            .original_result()
+    }
+
+    pub fn request_loan<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+        Arg1: ProxyArg<LoanTerm>,
+    >(
+        self,
+        amount: Arg0,
+        term: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("requestLoan")
             .argument(&amount)
-            .argument(&duration_days)
+            .argument(&term)
             .original_result()
     }
 
@@ -99,6 +130,242 @@ where
         self.wrapped_tx
             .raw_call("repayLoan")
             .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn extend_loan_deadline<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+        extra_days: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("extendLoanDeadline")
+            .argument(&loan_id)
+            .argument(&extra_days)
+            .original_result()
+    }
+
+    pub fn provide_collateral<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("provideCollateral")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn withdraw_collateral<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawCollateral")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn mark_loan_defaulted<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("markLoanDefaulted")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn forfeit_collateral<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("forfeitCollateral")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn provide_collateral_for_new_loan(
+        self,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("provideCollateralForNewLoan")
+            .original_result()
+    }
+
+    pub fn request_loan_with_collateral(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("requestLoanWithCollateral")
+            .original_result()
+    }
+
+    pub fn cancel_loan_request(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancelLoanRequest")
+            .original_result()
+    }
+
+    /// Leiloar garantia de um empréstimo inadimplente 
+    pub fn liquidate_collateral_via_auction<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("liquidateCollateralViaAuction")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn partial_repay_loan<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("partialRepayLoan")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn add_investor<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        investor: Arg0,
+        shares: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("add_investor")
+            .argument(&investor)
+            .argument(&shares)
+            .original_result()
+    }
+
+    /// Distribui os juros acumulados entre os investidores, conforme suas participações, 
+    /// e então zera o total_interest_earned. 
+    pub fn distribute_profits(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("distributeProfits")
+            .original_result()
+    }
+
+    /// Remove um investidor e ajusta o total de participações 
+    pub fn remove_investor<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        investor: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeInvestor")
+            .argument(&investor)
+            .original_result()
+    }
+
+    /// Modo de emergência: sacar todo o saldo 
+    pub fn emergency_withdraw(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("emergencyWithdraw")
+            .original_result()
+    }
+
+    /// Lista negra: impede que um usuário solicite empréstimos 
+    pub fn add_to_blacklist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addToBlacklist")
+            .argument(&user)
+            .original_result()
+    }
+
+    /// Consulta se um usuário está na blacklist 
+    pub fn is_blacklisted<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isBlacklisted")
+            .argument(&user)
+            .original_result()
+    }
+
+    /// Remove um usuário da blacklist, permitindo que ele solicite empréstimos de novo 
+    pub fn remove_from_blacklist<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeFromBlacklist")
+            .argument(&user)
+            .original_result()
+    }
+
+    pub fn set_max_loans_per_user<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        max: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMaxLoansPerUser")
+            .argument(&max)
+            .original_result()
+    }
+
+    pub fn set_min_collateral_amount<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        amount: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMinCollateralAmount")
+            .argument(&amount)
             .original_result()
     }
 
@@ -187,6 +454,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getMaxActiveLoans")
+            .original_result()
+    }
+
+    pub fn get_repaid_loans_count(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRepaidLoansCount")
             .original_result()
     }
 
@@ -300,22 +576,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getLiquidationDiscount")
-            .original_result()
-    }
-
-    pub fn add_investor<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<u64>,
-    >(
-        self,
-        investor: Arg0,
-        shares: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("add_investor")
-            .argument(&investor)
-            .argument(&shares)
             .original_result()
     }
 
@@ -475,6 +735,82 @@ where
             .original_result()
     }
 
+    pub fn initiate_contract_destruction(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initiateContractDestruction")
+            .original_result()
+    }
+
+    pub fn execute_contract_destruction(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("executeContractDestruction")
+            .original_result()
+    }
+
+    pub fn initiate_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initiateContractDestructionV2")
+            .original_result()
+    }
+
+    pub fn pause_contract(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseContract")
+            .original_result()
+    }
+
+    pub fn unpause_contract(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseContract")
+            .original_result()
+    }
+
+    pub fn confirm_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("confirmContractDestructionV2")
+            .original_result()
+    }
+
+    pub fn cancel_contract_destruction_v2(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancelContractDestructionV2")
+            .original_result()
+    }
+
+    pub fn request_loan_with_term<
+        Arg0: ProxyArg<LoanTerm>,
+    >(
+        self,
+        term: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("requestLoanWithTerm")
+            .argument(&term)
+            .original_result()
+    }
+
     pub fn get_min_required_score(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
@@ -568,48 +904,183 @@ where
             .original_result()
     }
 
-    pub fn initiate_contract_destruction(
+    pub fn get_loan_details<
+        Arg0: ProxyArg<u64>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Option<Loan<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("initiateContractDestruction")
+            .raw_call("getLoanDetails")
+            .argument(&loan_id)
             .original_result()
     }
 
-    pub fn execute_contract_destruction(
+    pub fn calculate_due_date<
+        Arg0: ProxyArg<LoanTerm>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        term: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("executeContractDestruction")
+            .raw_call("calculateDueDate")
+            .argument(&term)
             .original_result()
     }
 
-    pub fn initiate_contract_destruction_v2(
+    pub fn get_loan_term_days<
+        Arg0: ProxyArg<LoanTerm>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        term: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("initiateContractDestructionV2")
+            .raw_call("getLoanTermDays")
+            .argument(&term)
             .original_result()
     }
 
-    pub fn confirm_contract_destruction_v2(
+    pub fn get_interest_rate_for_term<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<LoanTerm>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        base_rate: Arg0,
+        term: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("confirmContractDestructionV2")
+            .raw_call("calculateInterestRateForTerm")
+            .argument(&base_rate)
+            .argument(&term)
             .original_result()
     }
 
-    pub fn cancel_contract_destruction_v2(
+    pub fn get_overdue_loans_count(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("cancelContractDestructionV2")
+            .raw_call("getOverdueLoansCount")
             .original_result()
     }
+
+    pub fn get_total_loan_amount(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalLoanAmount")
+            .original_result()
+    }
+
+    pub fn get_total_repayment_amount(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalRepaymentAmount")
+            .original_result()
+    }
+
+    pub fn is_paused(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isPaused")
+            .original_result()
+    }
+
+    pub fn calculate_liquidation_value<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("calculateLiquidationValue")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    /// Add these view methods inside the `#[multiversx_sc::contract] pub trait LoanController`: 
+    /// Returns all loan IDs associated with a user 
+    pub fn get_user_loan_history<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getUserLoanHistory")
+            .argument(&user)
+            .original_result()
+    }
+
+    /// Returns only the active loan IDs for a user 
+    pub fn get_user_active_loans<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getUserActiveLoans")
+            .argument(&user)
+            .original_result()
+    }
+
+    /// Returns only the repaid loan IDs for a user 
+    pub fn get_user_repaid_loans<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        user: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getUserRepaidLoans")
+            .argument(&user)
+            .original_result()
+    }
+}
+
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Debug, Clone, Copy, ManagedVecItem)]
+pub enum LoanTerm {
+    Standard,
+    Extended,
+    Short,
+    Maximum,
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
+pub struct Loan<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub borrower: ManagedAddress<Api>,
+    pub amount: BigUint<Api>,
+    pub repayment_amount: BigUint<Api>,
+    pub interest_rate: u64,
+    pub creation_timestamp: u64,
+    pub due_timestamp: u64,
+    pub status: LoanStatus,
+}
+
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, PartialEq, Debug, Clone, ManagedVecItem)]
+pub enum LoanStatus {
+    Active,
+    Repaid,
+    Defaulted,
+    Liquidated,
 }

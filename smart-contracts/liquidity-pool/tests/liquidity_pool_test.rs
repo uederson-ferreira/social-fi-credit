@@ -3,12 +3,17 @@
 // Descrição: Testes unitários para o contrato LiquidityPool
 // ==========================================================================
 
-use multiversx_sc::types::{Address, BigUint};
+use std::borrow::Borrow;
+use multiversx_sc::contract_base::ContractBase;
+use multiversx_sc::types::Address;
 use multiversx_sc_scenario::{
-    managed_address, managed_biguint, rust_biguint,
-    testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
-    DebugApi,
+    managed_address, managed_biguint, multiversx_chain_vm::display_util::verbose_hex, rust_biguint, testing_framework::{BlockchainStateWrapper, ContractObjWrapper}, DebugApi
 };
+
+use rand::{Rng, SeedableRng};
+use rand::rngs::StdRng;
+
+use loan_controller::*;
 
 use liquidity_pool::*;
 
@@ -58,11 +63,8 @@ where
         .execute_tx(&owner_address, &contract_wrapper, &rust_zero, |sc| {
             sc.init(
                 managed_address!(&loan_controller_address),
-                managed_address!(&debt_token_address),
-                managed_address!(&lp_token_address),
-                1000u64, // Taxa de juros base (10%)
-                2000u64, // Taxa máxima de utilização (20%)
-                8000u64, // Meta de utilização (80%)
+                managed_biguint!(1_000), // valor mínimo de depósito, por exemplo 1000
+                10u64                    // rendimento anual em %, por exemplo 10%
             );
         })
         .assert_ok();
@@ -123,7 +125,7 @@ fn test_deposit_liquidity() {
     // Depósito de liquidez pelo provedor
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(5000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
             
             // Verificar liquidez
             assert_eq!(sc.total_liquidity().get(), managed_biguint!(5000));
@@ -154,7 +156,7 @@ fn test_withdraw_liquidity() {
     // Primeiro, fazer um depósito
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(8000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
             
             // Simular emissão de tokens LP
             sc.lp_tokens_minted(managed_address!(&setup.provider_address), managed_biguint!(8000));
@@ -188,7 +190,7 @@ fn test_borrow_funds() {
     // Adicionar liquidez ao pool
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -196,11 +198,7 @@ fn test_borrow_funds() {
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Simular solicitação de empréstimo
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(5000),
-                1000u64 // Taxa de juros de 10%
-            );
+            sc.borrow();
             
             // Verificar estado
             assert_eq!(sc.total_liquidity().get(), managed_biguint!(10000));
@@ -233,17 +231,13 @@ fn test_repay_loan() {
     // Preparar o cenário: adicionar liquidez e fazer um empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(5000),
-                1000u64
-            );
+            sc.borrow();
             
             // Simular emissão de tokens de dívida
             sc.debt_tokens_minted(managed_address!(&setup.borrower_address), managed_biguint!(5000));
@@ -334,7 +328,7 @@ fn test_interest_distribution() {
     // Primeiro provedor adiciona 6000
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(6000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
             
             // Simular emissão de tokens LP
             sc.lp_tokens_minted(managed_address!(&setup.provider_address), managed_biguint!(6000));
@@ -344,7 +338,7 @@ fn test_interest_distribution() {
     // Segundo provedor adiciona 4000
     setup.blockchain_wrapper
         .execute_tx(&provider2, &setup.contract_wrapper, &rust_biguint!(4000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
             
             // Simular emissão de tokens LP
             sc.lp_tokens_minted(managed_address!(&provider2), managed_biguint!(4000));
@@ -354,11 +348,7 @@ fn test_interest_distribution() {
     // Fazer um empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(8000),
-                1000u64
-            );
+            sc.borrow();
             
             // Simular emissão de tokens de dívida
             sc.debt_tokens_minted(managed_address!(&setup.borrower_address), managed_biguint!(8000));
@@ -412,18 +402,14 @@ fn test_update_utilization_rate() {
     // Adicionar liquidez
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
     // Fazer empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(7500),
-                1000u64
-            );
+            sc.borrow();
             
             // Verificar taxa de utilização
             assert_eq!(sc.utilization_rate().get(), 7500u64); // 75%
@@ -433,11 +419,7 @@ fn test_update_utilization_rate() {
     // Fazer outro empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(1500),
-                1200u64 // Taxa maior devido à maior utilização
-            );
+            sc.borrow();
             
             // Verificar taxa de utilização
             assert_eq!(sc.utilization_rate().get(), 9000u64); // 90%
@@ -498,7 +480,7 @@ fn test_pause_unpause() {
     // Agora deve ser possível fazer depósito
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(1000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
             
             // Verificar que funcionou
             assert_eq!(sc.total_liquidity().get(), managed_biguint!(1000));
@@ -547,17 +529,13 @@ fn test_update_related_contracts() {
     // Verificar que o novo controlador pode fazer empréstimos
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
     setup.blockchain_wrapper
         .execute_tx(&new_loan_controller, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(5000),
-                1000u64
-            );
+            sc.borrow();
             
             // Verificar empréstimo
             assert_eq!(sc.total_borrows().get(), managed_biguint!(5000));
@@ -573,17 +551,13 @@ fn test_use_reserves() {
     // Adicionar liquidez e acumular reservas
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.borrow(
-                managed_address!(&setup.borrower_address),
-                managed_biguint!(8000),
-                1000u64
-            );
+            sc.borrow();
         })
         .assert_ok();
     

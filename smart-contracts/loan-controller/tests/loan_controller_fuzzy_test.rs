@@ -23,7 +23,7 @@ where
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
     pub owner_address: Address,
-    pub reputation_score_address: Address, 
+    pub _reputation_score_address: Address, 
     pub contract_wrapper: ContractObjWrapper<loan_controller::ContractObj<DebugApi>, ContractObjBuilder>,
 }
 
@@ -62,7 +62,7 @@ where
     ContractSetup {
         blockchain_wrapper,
         owner_address,
-        reputation_score_address,
+        _reputation_score_address: reputation_score_address,
         contract_wrapper,
     }
 }
@@ -122,7 +122,7 @@ fn test_loan_amounts_fuzzy() {
         let duration_days = rng.gen_range(1..365u64);
         
         setup.blockchain_wrapper
-            .execute_query(&setup.contract_wrapper, |sc| {
+            .execute_query(&setup.contract_wrapper, |_sc| {
                 // Calcular valor total de pagamento
                 let amount_biguint: BigUint<DebugApi> = managed_biguint!(amount);
                 let interest_amount: BigUint<_> = &amount_biguint * &managed_biguint!(interest_rate) / &managed_biguint!(10000u32);
@@ -182,7 +182,7 @@ fn test_loan_extensions_fuzzy() {
         let extension_days = rng.gen_range(1..30u64);
         
         setup.blockchain_wrapper
-            .execute_query(&setup.contract_wrapper, |sc| {
+            .execute_query(&setup.contract_wrapper, |_sc| {
                 // Configurar timestamps
                 let current_time = 10000u64;
                 let initial_due_time = current_time + initial_days * 24 * 60 * 60;
@@ -215,7 +215,7 @@ fn test_partial_payments_fuzzy() {
         let num_payments = rng.gen_range(2..5u32);
         
         setup.blockchain_wrapper
-            .execute_query(&setup.contract_wrapper, |sc| {
+            .execute_query(&setup.contract_wrapper, |_sc| {
                 let mut remaining = repayment_amount.clone();
                 let mut total_paid = managed_biguint!(0);
                 
@@ -555,7 +555,7 @@ fn test_malicious_inputs_fuzzy() {
     let mut setup = setup_contract(loan_controller::contract_obj);
     
     // Usar uma semente fixa para reprodutibilidade
-    let mut rng = StdRng::seed_from_u64(42);
+    let mut _rng = StdRng::seed_from_u64(42);
     
     // Testar com valores extremos ou potencialmente problemáticos
     let test_cases = [

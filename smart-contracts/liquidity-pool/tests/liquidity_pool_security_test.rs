@@ -60,11 +60,8 @@ where
         .execute_tx(&owner_address, &contract_wrapper, &rust_zero, |sc| {
             sc.init(
                 managed_address!(&loan_controller_address),
-                managed_address!(&debt_token_address),
-                managed_address!(&lp_token_address),
-                1000u64, // Taxa de juros base (10%)
-                2000u64, // Taxa máxima de utilização (20%)
-                8000u64, // Meta de utilização (80%)
+                managed_biguint!(1_000), // valor mínimo de depósito, por exemplo 1000
+                10u64                    // rendimento anual em %, por exemplo 10%
             );
         })
         .assert_ok();
@@ -90,7 +87,7 @@ fn test_unauthorized_borrow() {
     // Adicionar liquidez ao pool
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -124,7 +121,7 @@ fn test_double_repayment_protection() {
     // Preparar o cenário: adicionar liquidez e fazer um empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -175,7 +172,7 @@ fn test_reentrancy_attack() {
     // Preparar o cenário
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -210,7 +207,7 @@ fn test_borrow_with_insufficient_liquidity() {
     // Adicionar liquidez limitada
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -237,7 +234,7 @@ fn test_unauthorized_reserve_usage() {
     // Configurar cenário com algumas reservas
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -287,7 +284,7 @@ fn test_liquidity_manipulation() {
     // Adicionar liquidez inicial
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -316,7 +313,7 @@ fn test_flash_loan_attack() {
     // Adicionar liquidez
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(100000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -346,7 +343,7 @@ fn test_utilization_rate_manipulation() {
     // Adicionar liquidez
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -386,7 +383,7 @@ fn test_liquidity_lockup_attack() {
     // Adicionar liquidez
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(100000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -417,7 +414,7 @@ fn test_reserve_manipulation() {
     // Adicionar liquidez e gerar algumas reservas
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(100000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -495,7 +492,7 @@ fn test_incorrect_borrow_balance() {
     // Configurar um cenário com um empréstimo
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(50000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -552,7 +549,7 @@ fn test_overflow_underflow_protection() {
     // Adicionar liquidez
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(100000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -576,7 +573,7 @@ fn test_overflow_underflow_protection() {
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(u64::MAX), |sc| {
             // Fazer um depósito gigante
             // Em um contrato seguro, isso não causaria overflow
-            sc.deposit();
+            sc.deposit_funds();
             
             // Verificar saldo atualizado (não deve causar overflow)
             let provider_balance = sc.provider_liquidity(&managed_address!(&setup.provider_address)).get();
@@ -603,7 +600,7 @@ fn test_dos_attack_protection() {
                     // "Deposit below minimum"
                     assert!(deposit_amount < min_deposit);
                 } else {
-                    sc.deposit();
+                    sc.deposit_funds();
                 }
             })
             .assert_ok();
@@ -612,7 +609,7 @@ fn test_dos_attack_protection() {
     // Verificar proteção contra muitas pequenas retiradas
     setup.blockchain_wrapper
         .execute_tx(&setup.provider_address, &setup.contract_wrapper, &rust_biguint!(10000), |sc| {
-            sc.deposit();
+            sc.deposit_funds();
         })
         .assert_ok();
     
@@ -632,7 +629,7 @@ fn test_dos_attack_protection() {
                     sc.lp_tokens_burned(managed_address!(&setup.provider_address), withdrawal_amount.clone());
                     
                     // Retirar
-                    sc.withdraw(withdrawal_amount);
+                    sc.withdraw_funds(withdrawal_amount);
                 }
             })
             .assert_ok();

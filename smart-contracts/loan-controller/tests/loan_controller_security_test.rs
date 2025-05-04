@@ -120,7 +120,7 @@ fn test_arithmetic_extremes() {
     
     // Teste com valores muito grandes para verificar overflow
     setup.blockchain_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
+        .execute_query(&setup.contract_wrapper, |_sc| {
             // Testar cálculo de juros para valor muito grande
             let large_amount: BigUint<DebugApi> = BigUint::from(u64::MAX);
             let interest_rate = 1000u64; // 10%
@@ -318,7 +318,7 @@ fn test_zero_values() {
     
     // Tentar operações com valores zero
     setup.blockchain_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
+        .execute_query(&setup.contract_wrapper, |_sc| {
             // Tentar calcular juros para valor zero
             let zero_amount: BigUint<DebugApi> = managed_biguint!(0);
             let interest_rate = 1000u64; // 10%
@@ -392,7 +392,7 @@ fn test_overflow_underflow_protection() {
     
     // Testar cálculos com valores grandes
     setup.blockchain_wrapper
-        .execute_query(&setup.contract_wrapper, |sc| {
+        .execute_query(&setup.contract_wrapper, |_sc| {
             // Testar com valor máximo para BigUint
             let max_value: BigUint<DebugApi> = &managed_biguint!(u64::MAX) * &managed_biguint!(u64::MAX);
             
@@ -678,14 +678,6 @@ fn test_timecode_security() {
 #[test]
 fn test_self_destruct_security() {
     let mut setup = setup_contract(loan_controller::contract_obj);
-    
-    // Adicionar fundos ao contrato
-    setup.blockchain_wrapper.execute_tx(
-        &setup.owner_address,
-        &setup.contract_wrapper,
-        &rust_biguint!(10000),
-        |_| {},
-    );
     
     // Verificar que apenas o proprietário pode iniciar auto-destruição
     setup.blockchain_wrapper

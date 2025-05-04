@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           48
+// Endpoints:                           84
 // Async Callback:                       1
-// Total number of exported functions:  50
+// Total number of exported functions:  86
 
 #![no_std]
 
@@ -18,8 +18,29 @@ multiversx_sc_wasm_adapter::endpoints! {
     loan_controller
     (
         init => init
+        withdrawFunds => withdraw_funds
+        setLoanTerms => set_loan_terms
         requestLoan => request_loan
         repayLoan => repay_loan
+        extendLoanDeadline => extend_loan_deadline
+        provideCollateral => provide_collateral
+        withdrawCollateral => withdraw_collateral
+        markLoanDefaulted => mark_loan_defaulted
+        forfeitCollateral => forfeit_collateral
+        provideCollateralForNewLoan => provide_collateral_for_new_loan
+        requestLoanWithCollateral => request_loan_with_collateral
+        cancelLoanRequest => cancel_loan_request
+        liquidateCollateralViaAuction => liquidate_collateral_via_auction
+        partialRepayLoan => partial_repay_loan
+        add_investor => add_investor
+        distributeProfits => distribute_profits
+        removeInvestor => remove_investor
+        emergencyWithdraw => emergency_withdraw
+        addToBlacklist => add_to_blacklist
+        isBlacklisted => is_blacklisted
+        removeFromBlacklist => remove_from_blacklist
+        setMaxLoansPerUser => set_max_loans_per_user
+        setMinCollateralAmount => set_min_collateral_amount
         set_min_interest_rate => set_min_interest_rate
         set_max_interest_rate => set_max_interest_rate
         getMinInterestRate => get_min_interest_rate
@@ -28,6 +49,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         get_block_timestamp => get_block_timestamp
         set_max_active_loans => set_max_active_loans
         getMaxActiveLoans => get_max_active_loans
+        getRepaidLoansCount => get_repaid_loans_count
         requestLoanSync => request_loan_sync
         mark_expired_loans => mark_expired_loans
         setExtensionFeePercent => set_extension_fee_percent
@@ -38,7 +60,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         setLiquidationDiscount => set_liquidation_discount
         getCollateralRatio => get_collateral_ratio
         getLiquidationDiscount => get_liquidation_discount
-        add_investor => add_investor
         getInvestorShares => get_investor_shares
         getTotalInvestorShares => get_total_investor_shares
         set_standard_loan_term_days => set_standard_loan_term_days
@@ -52,6 +73,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         set_extended_term_rate_multiplier => set_extended_term_rate_multiplier
         set_max_term_rate_multiplier => set_max_term_rate_multiplier
         set_min_required_score => set_min_required_score
+        initiateContractDestruction => initiate_contract_destruction
+        executeContractDestruction => execute_contract_destruction
+        initiateContractDestructionV2 => initiate_contract_destruction_v2
+        pauseContract => pause_contract
+        unpauseContract => unpause_contract
+        confirmContractDestructionV2 => confirm_contract_destruction_v2
+        cancelContractDestructionV2 => cancel_contract_destruction_v2
+        requestLoanWithTerm => request_loan_with_term
         getMinRequiredScore => get_min_required_score
         getInterestRateBase => get_interest_rate_base
         getExtendedTermRateMultiplier => get_extended_term_rate_multiplier
@@ -61,11 +90,18 @@ multiversx_sc_wasm_adapter::endpoints! {
         getActiveLoansCount => get_active_loans_count
         set_operation_timelock => set_operation_timelock
         getOperationTimelock => get_operation_timelock
-        initiateContractDestruction => initiate_contract_destruction
-        executeContractDestruction => execute_contract_destruction
-        initiateContractDestructionV2 => initiate_contract_destruction_v2
-        confirmContractDestructionV2 => confirm_contract_destruction_v2
-        cancelContractDestructionV2 => cancel_contract_destruction_v2
+        getLoanDetails => get_loan_details
+        calculateDueDate => calculate_due_date
+        getLoanTermDays => get_loan_term_days
+        calculateInterestRateForTerm => get_interest_rate_for_term
+        getOverdueLoansCount => get_overdue_loans_count
+        getTotalLoanAmount => get_total_loan_amount
+        getTotalRepaymentAmount => get_total_repayment_amount
+        isPaused => is_paused
+        calculateLiquidationValue => calculate_liquidation_value
+        getUserLoanHistory => get_user_loan_history
+        getUserActiveLoans => get_user_active_loans
+        getUserRepaidLoans => get_user_repaid_loans
     )
 }
 
