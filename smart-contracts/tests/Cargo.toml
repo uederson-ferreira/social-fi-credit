@@ -1,0 +1,17 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "integration_tests"
+path = "lib.rs"
+
+[dependencies]
+multiversx-sc = "0.57.1"
+multiversx-sc-scenario = "0.57.1"
+debt-token = { path = "../debt-token" }
+loan-controller = { path = "../loan-controller" }
+reputation-score = { path = "../reputation-score" }
+liquidity-pool = { path = "../liquidity-pool" }
+lp-token = { path = "../lp-token"}

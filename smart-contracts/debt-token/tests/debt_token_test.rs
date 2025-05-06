@@ -1,11 +1,11 @@
 // ==========================================================================
-// ARQUIVO: debt_token_test.rs
-// Descrição: Testes unitários para o contrato DebtToken
+// ARQUIVO: debt_token_test_revised.rs
+// Descrição: Testes unitários revisados para o contrato DebtToken
 // ==========================================================================
 
 use multiversx_sc::types::{Address, BigUint};
 use multiversx_sc_scenario::{
-    managed_address, managed_biguint, rust_biguint,
+    managed_address, managed_biguint, managed_token_id, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
     DebugApi,
 };
@@ -63,6 +63,25 @@ where
     }
 }
 
+// Função auxiliar para configurar o token de dívida
+fn issue_debt_token<ContractObjBuilder>(
+    setup: &mut ContractSetup<ContractObjBuilder>
+)
+where
+    ContractObjBuilder: 'static + Copy + Fn() -> debt_token::ContractObj<DebugApi>,
+{
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.issue_debt_token();
+        });
+    
+    // Simular a resposta do callback de issue
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.debt_token_id().set(&managed_token_id!(b"DEBT-123456"));
+        });
+}
+
 // Teste de inicialização do contrato
 #[test]
 fn test_init() {
@@ -78,15 +97,193 @@ fn test_init() {
             );
             
             // Verificar oferta total inicial é zero
-            assert_eq!(sc.total_token_supply(), managed_biguint!(0));
+            assert_eq!(sc.total_token_supply(), BigUint::zero());
+            
+            // Verificar que o ID do token está vazio
+            assert!(sc.debt_token_id().is_empty());
         })
         .assert_ok();
 }
 
-// Teste de emissão de tokens de dívida
+// Teste de emissão do token de dívida
 #[test]
-fn test_mint_debt_tokens() {
+fn test_issue_debt_token() {
     let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token
+    issue_debt_token(&mut setup);
+    
+    // Verificar que o ID do token não está mais vazio
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert!(!sc.debt_token_id().is_empty());
+            assert_eq!(sc.debt_token_id().get(), managed_token_id!(b"DEBT-123456"));
+        })
+        .assert_ok();
+}
+
+// Teste de criação de NFT de dívida
+#[test]
+fn test_create_debt_nft() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    let _amount = rust_biguint!(5000);
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000;
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Criar NFT para um empréstimo
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            let nft_nonce = sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+            
+            // NFT deve ter um nonce válido (maior que zero)
+            assert!(nft_nonce > 0);
+            
+            // Verificar mapeamentos
+            assert_eq!(sc.get_loan_nft_id(loan_id), nft_nonce);
+            assert_eq!(sc.get_nft_loan_id(nft_nonce), loan_id);
+        })
+        .assert_ok();
+}
+
+// Teste de queima de NFT de dívida
+#[test]
+fn test_burn_debt_nft() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    let _amount = rust_biguint!(5000);
+    let interest_rate = 500u64; 
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000; 
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Criar NFT para um empréstimo
+    let mut nft_nonce = 0u64;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            nft_nonce = sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        })
+        .assert_ok();
+    
+    // Queimar o NFT
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn_debt_nft(loan_id);
+            
+            // Verificar que os mapeamentos foram limpos
+            assert_eq!(sc.get_loan_nft_id(loan_id), 0);
+            assert_eq!(sc.get_nft_loan_id(nft_nonce), 0);
+        })
+        .assert_ok();
+}
+
+// Teste de segurança: Apenas o controlador de empréstimos pode criar NFTs
+#[test]
+#[should_panic(expected = "Only loan controller can create debt NFTs")]
+fn test_create_debt_nft_unauthorized() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    //let amount = rust_biguint!(5000);
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000;
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Tentar criar NFT a partir de endereço não autorizado (usuário comum)
+    setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        })
+        .assert_ok();
+}
+
+// Teste de segurança: Apenas o controlador de empréstimos pode queimar NFTs
+#[test]
+#[should_panic(expected = "Only loan controller can burn debt NFTs")]
+fn test_burn_debt_nft_unauthorized() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    //let amount = rust_biguint!(5000);
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000;
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Criar NFT para um empréstimo
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        })
+        .assert_ok();
+    
+    // Tentar queimar o NFT a partir de endereço não autorizado (usuário comum)
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn_debt_nft(loan_id);
+        });
+}
+
+// Teste de mintagem de tokens de dívida
+#[test]
+fn test_mint_tokens() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Mintar tokens para um usuário
     setup.blockchain_wrapper
@@ -95,79 +292,94 @@ fn test_mint_debt_tokens() {
             sc.mint(managed_address!(&setup.user_address), managed_biguint!(5000));
             
             // Verificar saldo do usuário
-            let user_balance = sc.balance_of(&managed_address!(&setup.user_address));
+            let user_balance = sc.balance_of(managed_address!(&setup.user_address));
             assert_eq!(user_balance, managed_biguint!(5000));
             
             // Verificar oferta total
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(5000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(5000));
         })
         .assert_ok();
 }
 
 // Teste de queima de tokens de dívida
 #[test]
-fn test_burn_debt_tokens() {
+fn test_burn_tokens() {
     let mut setup = setup_contract(debt_token::contract_obj);
     
-    // Primeiro, mintar tokens para o usuário
-    setup.blockchain_wrapper
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Mintar tokens para o usuário
+    let _ = setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             sc.mint(managed_address!(&setup.user_address), managed_biguint!(5000));
-        })
-        .assert_ok();
+        });
     
-    // Agora, queimar parte dos tokens
+    // Queimar parte dos tokens
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Queimar 2000 tokens
             sc.burn(managed_address!(&setup.user_address), managed_biguint!(2000));
             
             // Verificar saldo do usuário
-            let user_balance = sc.balance_of(&managed_address!(&setup.user_address));
+            let user_balance = sc.balance_of(managed_address!(&setup.user_address));
             assert_eq!(user_balance, managed_biguint!(3000));
             
             // Verificar oferta total
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(3000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(3000));
         })
         .assert_ok();
 }
 
-// Teste de verificação de autorização para mintar/queimar
+// Teste de verificação de autorização para mintar tokens
 #[test]
-fn test_authorization() {
+#[should_panic(expected = "Only loan controller can mint tokens")]
+fn test_mint_tokens_unauthorized() {
     let mut setup = setup_contract(debt_token::contract_obj);
     
-    // Tentar mintar a partir de endereço não autorizado
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Tentar mintar a partir de endereço não autorizado (usuário comum)
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Tentar mintar (deve falhar na implementação real)
-            // Aqui simulamos a verificação que deve existir
-            let caller_address = sc.blockchain().get_caller();
-            let loan_controller = sc.loan_controller_address().get();
-            
-            assert!(caller_address != loan_controller);
-            // Na implementação real, isso lançaria erro
+            sc.mint(managed_address!(&setup.user_address), managed_biguint!(1000));
+        })
+        .assert_ok();
+}
+
+// Teste de verificação de autorização para queimar tokens
+#[test]
+#[should_panic(expected = "Only loan controller can burn tokens")]
+fn test_burn_tokens_unauthorized() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Mintar tokens para o usuário
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&setup.user_address), managed_biguint!(5000));
         })
         .assert_ok();
     
-    // Tentar queimar a partir de endereço não autorizado
+    // Tentar queimar a partir de endereço não autorizado (usuário comum)
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Tentar queimar (deve falhar na implementação real)
-            let caller_address = sc.blockchain().get_caller();
-            let loan_controller = sc.loan_controller_address().get();
-            
-            assert!(caller_address != loan_controller);
-            // Na implementação real, isso lançaria erro
+            sc.burn(managed_address!(&setup.user_address), managed_biguint!(1000));
         })
         .assert_ok();
 }
 
 // Teste de transferência de tokens
 #[test]
-fn test_transfer() {
+fn test_transfer_tokens() {
     let mut setup = setup_contract(debt_token::contract_obj);
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -180,27 +392,31 @@ fn test_transfer() {
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Transferir 2000 tokens
-            sc.transfer(managed_address!(&recipient), managed_biguint!(2000));
+            sc.transfer_tokens(managed_address!(&recipient), managed_biguint!(2000));
             
             // Verificar saldo do remetente
-            let sender_balance = sc.balance_of(&managed_address!(&setup.user_address));
+            let sender_balance = sc.balance_of(managed_address!(&setup.user_address));
             assert_eq!(sender_balance, managed_biguint!(3000));
             
             // Verificar saldo do destinatário
-            let recipient_balance = sc.balance_of(&managed_address!(&recipient));
+            let recipient_balance = sc.balance_of(managed_address!(&recipient));
             assert_eq!(recipient_balance, managed_biguint!(2000));
             
             // Verificar oferta total (não deve mudar)
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(5000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(5000));
         })
         .assert_ok();
 }
 
 // Teste de transferência com saldo insuficiente
 #[test]
-fn test_transfer_insufficient_balance() {
+#[should_panic(expected = "Insufficient balance for transfer")]
+fn test_transfer_tokens_insufficient_balance() {
     let mut setup = setup_contract(debt_token::contract_obj);
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -212,15 +428,7 @@ fn test_transfer_insufficient_balance() {
     // Tentar transferir mais do que o saldo
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Verificar saldo atual
-            let current_balance = sc.balance_of(&managed_address!(&setup.user_address));
-            let amount_to_transfer = managed_biguint!(2000);
-            
-            // Verificar se a transferência excederia o saldo
-            assert!(amount_to_transfer > current_balance);
-            
-            // Na implementação real, isso lançaria erro
-            // "Insufficient balance for transfer"
+            sc.transfer_tokens(managed_address!(&recipient), managed_biguint!(2000));
         })
         .assert_ok();
 }
@@ -231,6 +439,9 @@ fn test_approve_and_transfer_from() {
     let mut setup = setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -243,12 +454,12 @@ fn test_approve_and_transfer_from() {
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Aprovar 3000 tokens
-            sc.approve(managed_address!(&spender), managed_biguint!(3000));
+            sc.approve_tokens(managed_address!(&spender), managed_biguint!(3000));
             
             // Verificar allowance
-            let allowance = sc.allowance(
-                &managed_address!(&setup.user_address),
-                &managed_address!(&spender)
+            let allowance = sc.get_allowance(
+                managed_address!(&setup.user_address),
+                managed_address!(&spender)
             );
             assert_eq!(allowance, managed_biguint!(3000));
         })
@@ -258,23 +469,23 @@ fn test_approve_and_transfer_from() {
     setup.blockchain_wrapper
         .execute_tx(&spender, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             // Transferir 2000 tokens
-            sc.transfer_from(
+            sc.transfer_tokens_from(
                 managed_address!(&setup.user_address),
                 managed_address!(&recipient),
                 managed_biguint!(2000)
             );
             
             // Verificar saldos
-            let owner_balance = sc.balance_of(&managed_address!(&setup.user_address));
-            let recipient_balance = sc.balance_of(&managed_address!(&recipient));
+            let owner_balance = sc.balance_of(managed_address!(&setup.user_address));
+            let recipient_balance = sc.balance_of(managed_address!(&recipient));
             
             assert_eq!(owner_balance, managed_biguint!(3000));
             assert_eq!(recipient_balance, managed_biguint!(2000));
             
             // Verificar allowance restante
-            let allowance = sc.allowance(
-                &managed_address!(&setup.user_address),
-                &managed_address!(&spender)
+            let allowance = sc.get_allowance(
+                managed_address!(&setup.user_address),
+                managed_address!(&spender)
             );
             assert_eq!(allowance, managed_biguint!(1000));
         })
@@ -283,10 +494,14 @@ fn test_approve_and_transfer_from() {
 
 // Teste de transfer_from com autorização insuficiente
 #[test]
-fn test_transfer_from_insufficient_allowance() {
+#[should_panic(expected = "Insufficient allowance")]
+fn test_transfer_tokens_from_insufficient_allowance() {
     let mut setup = setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -296,53 +511,47 @@ fn test_transfer_from_insufficient_allowance() {
         .assert_ok();
     
     // Aprovar um valor baixo
-    setup.blockchain_wrapper
+    let _ = setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.approve(managed_address!(&spender), managed_biguint!(1000));
-        })
-        .assert_ok();
+            sc.approve_tokens(managed_address!(&spender), managed_biguint!(1000));
+        });
     
     // Tentar transferir mais do que o aprovado
-    setup.blockchain_wrapper
-        .execute_tx(&spender, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Verificar allowance atual
-            let current_allowance = sc.allowance(
-                &managed_address!(&setup.user_address),
-                &managed_address!(&spender)
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.transfer_tokens_from(
+                managed_address!(&setup.user_address),
+                managed_address!(&recipient),
+                managed_biguint!(2000)
             );
-            let amount_to_transfer = managed_biguint!(2000);
-            
-            // Verificar se a transferência excederia a autorização
-            assert!(amount_to_transfer > current_allowance);
-            
-            // Na implementação real, isso lançaria erro
-            // "Insufficient allowance for transfer"
-        })
-        .assert_ok();
+        });
 }
 
 // Teste de aumento e diminuição de allowance
 #[test]
-fn test_increase_decrease_allowance() {
+fn test_increase_decrease_token_allowance() {
     let mut setup = setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
     
     // Aprovar um valor inicial
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.approve(managed_address!(&spender), managed_biguint!(1000));
+            sc.approve_tokens(managed_address!(&spender), managed_biguint!(1000));
         })
         .assert_ok();
     
     // Aumentar a autorização
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.increase_allowance(managed_address!(&spender), managed_biguint!(500));
+            sc.increase_token_allowance(managed_address!(&spender), managed_biguint!(500));
             
             // Verificar nova allowance
-            let allowance = sc.allowance(
-                &managed_address!(&setup.user_address),
-                &managed_address!(&spender)
+            let allowance = sc.get_allowance(
+                managed_address!(&setup.user_address),
+                managed_address!(&spender)
             );
             assert_eq!(allowance, managed_biguint!(1500));
         })
@@ -351,14 +560,39 @@ fn test_increase_decrease_allowance() {
     // Diminuir a autorização
     setup.blockchain_wrapper
         .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.decrease_allowance(managed_address!(&spender), managed_biguint!(800));
+            sc.decrease_token_allowance(managed_address!(&spender), managed_biguint!(800));
             
             // Verificar nova allowance
-            let allowance = sc.allowance(
-                &managed_address!(&setup.user_address),
-                &managed_address!(&spender)
+            let allowance = sc.get_allowance(
+                managed_address!(&setup.user_address),
+                managed_address!(&spender)
             );
             assert_eq!(allowance, managed_biguint!(700));
+        })
+        .assert_ok();
+}
+
+// Teste de diminuição de allowance para valor maior que o atual
+#[test]
+#[should_panic(expected = "Cannot decrease below zero")]
+fn test_decrease_token_allowance_below_zero() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Aprovar um valor inicial
+    setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.approve_tokens(managed_address!(&spender), managed_biguint!(500));
+        })
+        .assert_ok();
+    
+    // Tentar diminuir para um valor maior que o atual
+    setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.decrease_token_allowance(managed_address!(&spender), managed_biguint!(800));
         })
         .assert_ok();
 }
@@ -370,6 +604,9 @@ fn test_total_supply_consistency() {
     let user2 = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let user3 = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
     // Realizar várias operações e verificar consistência
     setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
@@ -379,166 +616,304 @@ fn test_total_supply_consistency() {
             sc.mint(managed_address!(&user3), managed_biguint!(2000));
             
             // Verificar oferta total
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(10000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(10000));
             
             // Queimar alguns tokens
             sc.burn(managed_address!(&setup.user_address), managed_biguint!(1000));
             sc.burn(managed_address!(&user2), managed_biguint!(500));
             
             // Verificar oferta total após queima
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(8500));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(8500));
             
             // Mintar mais tokens
             sc.mint(managed_address!(&user3), managed_biguint!(1500));
             
             // Verificar oferta total final
-            assert_eq!(sc.total_token_supply().get(), managed_biguint!(10000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(10000));
         })
         .assert_ok();
 }
 
-// Teste de atualização do endereço do controlador de empréstimos
+// Teste do ciclo de vida completo
 #[test]
-fn test_update_loan_controller() {
+fn test_complete_lifecycle() {
     let mut setup = setup_contract(debt_token::contract_obj);
-    let new_loan_controller = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
+    let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
-    // Tentar atualizar com endereço não autorizado
-    setup.blockchain_wrapper
-        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Na implementação real, isso lançaria erro
-            // "Only owner can call this function"
-            // Aqui simulamos a verificação
-            let caller = sc.blockchain().get_caller();
-            let owner = sc.blockchain().get_owner_address();
-            assert!(caller != owner);
-        })
-        .assert_ok();
-    
-    // Atualizar com endereço autorizado
-    setup.blockchain_wrapper
-        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.set_loan_controller_address(managed_address!(&new_loan_controller));
-            
-            // Verificar novo endereço
-            assert_eq!(
-                sc.loan_controller_address().get(),
-                managed_address!(&new_loan_controller)
-            );
-        })
-        .assert_ok();
-    
-    // Verificar que o novo controlador pode mintar
-    setup.blockchain_wrapper
-        .execute_tx(&new_loan_controller, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.mint(managed_address!(&setup.user_address), managed_biguint!(1000));
-            
-            // Verificar saldo
-            assert_eq!(
-                sc.balance_of(&managed_address!(&setup.user_address)),
-                managed_biguint!(1000)
-            );
-        })
-        .assert_ok();
-    
-    // Verificar que o antigo controlador não pode mais mintar
-    setup.blockchain_wrapper
-        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Na implementação real, isso lançaria erro
-            // "Only loan controller can call this function"
-            // Aqui simulamos a verificação
-            let caller = sc.blockchain().get_caller();
-            let loan_controller = sc.loan_controller_address().get();
-            assert!(caller != loan_controller);
-        })
-        .assert_ok();
-}
-
-// Teste de pausa e retomada do contrato
-#[test]
-fn test_pause_unpause() {
-    let mut setup = setup_contract(debt_token::contract_obj);
-    
-    // Pausar o contrato
-    setup.blockchain_wrapper
-        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.pause();
-            
-            // Verificar estado
-            assert!(sc.is_paused().get());
-        })
-        .assert_ok();
-    
-    // Tentar transferir com contrato pausado
-    setup.blockchain_wrapper
-        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Verificar se está pausado
-            let is_paused = sc.is_paused().get();
-            assert!(is_paused);
-            
-            // Na implementação real, isso lançaria erro
-            // "Contract is paused"
-        })
-        .assert_ok();
-    
-    // Retomar o contrato
-    setup.blockchain_wrapper
-        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.unpause();
-            
-            // Verificar estado
-            assert!(!sc.is_paused().get());
-        })
-        .assert_ok();
-}
-
-// Teste para garantir que mintagem e queima só podem ser feitas pelo controlador
-#[test]
-fn test_only_controller_mint_burn() {
-    let mut setup = setup_contract(debt_token::contract_obj);
-    
-    // O próprio owner não deve poder mintar ou queimar
-    setup.blockchain_wrapper
-        .execute_tx(&setup.owner_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            // Na implementação real, isso lançaria erro
-            // "Only loan controller can call this function"
-            // Aqui simulamos a verificação
-            let caller = sc.blockchain().get_caller();
-            let loan_controller = sc.loan_controller_address().get();
-            assert!(caller != loan_controller);
-        })
-        .assert_ok();
-    
-    // Controlador pode mintar
-    setup.blockchain_wrapper
-        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            sc.mint(managed_address!(&setup.user_address), managed_biguint!(1000));
-            
-            // Verificar saldo
-            assert_eq!(
-                sc.balance_of(&managed_address!(&setup.user_address)),
-                managed_biguint!(1000)
-            );
-        })
-        .assert_ok();
-}
-
-// Teste de meta propriedades do token
-#[test]
-fn test_token_properties() {
-    let mut setup = setup_contract(debt_token::contract_obj);
-    
-    // Verificar propriedades do token
+    // 1. Verificar estado inicial
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            // Verificar nome
-            assert_eq!(sc.token_name(), "Debt Token");
-            
-            // Verificar símbolo
-            assert_eq!(sc.token_ticker(), "DEBT");
-            
-            // Verificar número de decimais
-            assert_eq!(sc.token_decimals(), 18u32);
+            assert!(sc.debt_token_id().is_empty());
+            assert_eq!(sc.total_token_supply(), BigUint::zero());
         })
         .assert_ok();
+    
+    // 2. Emitir o token de dívida
+    issue_debt_token(&mut setup);
+    
+    // 3. Verificar que o token foi emitido
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert!(!sc.debt_token_id().is_empty());
+        })
+        .assert_ok();
+    
+    // 4. Criar um NFT de dívida
+    let loan_id = 42u64;
+    let current_timestamp = 1000000u64;
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    let mut nft_nonce = 0u64;
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            nft_nonce = sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                500u64, // 5% taxa de juros
+                current_timestamp + 2592000 // +30 dias
+            );
+        })
+        .assert_ok();
+    
+    // 5. Verificar que o NFT foi criado corretamente
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            assert_eq!(sc.get_loan_nft_id(loan_id), nft_nonce);
+            assert_eq!(sc.get_nft_loan_id(nft_nonce), loan_id);
+        })
+        .assert_ok();
+    
+    // 6. Mintar tokens de dívida
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&setup.user_address), managed_biguint!(10000));
+            
+            // Verificar saldo e oferta total
+            assert_eq!(sc.balance_of(managed_address!(&setup.user_address)), managed_biguint!(10000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(10000));
+        })
+        .assert_ok();
+    
+    // 7. Aprovar tokens para recipient
+    setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.approve_tokens(managed_address!(&recipient), managed_biguint!(3000));
+        })
+        .assert_ok();
+    
+    // 8. Recipient faz transfer_from
+    setup.blockchain_wrapper
+        .execute_tx(&recipient, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.transfer_tokens_from(
+                managed_address!(&setup.user_address), 
+                managed_address!(&recipient),
+                managed_biguint!(3000)
+            );
+            
+            // Verificar saldos
+            assert_eq!(sc.balance_of(managed_address!(&setup.user_address)), managed_biguint!(7000));
+            assert_eq!(sc.balance_of(managed_address!(&recipient)), managed_biguint!(3000));
+        })
+        .assert_ok();
+    
+    // 9. Usuário transfere tokens diretamente
+    setup.blockchain_wrapper
+        .execute_tx(&setup.user_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.transfer_tokens(managed_address!(&recipient), managed_biguint!(2000));
+            
+            // Verificar saldos após transferência direta
+            assert_eq!(sc.balance_of(managed_address!(&setup.user_address)), managed_biguint!(5000));
+            assert_eq!(sc.balance_of(managed_address!(&recipient)), managed_biguint!(5000));
+        })
+        .assert_ok();
+    
+    // 10. Queimar parte dos tokens
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn(managed_address!(&setup.user_address), managed_biguint!(1000));
+            
+            // Verificar saldo após queima
+            assert_eq!(sc.balance_of(managed_address!(&setup.user_address)), managed_biguint!(4000));
+            assert_eq!(sc.total_token_supply(), managed_biguint!(9000));
+        })
+        .assert_ok();
+    
+    // 11. Queimar o NFT de dívida
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn_debt_nft(loan_id);
+            
+            // Verificar que o NFT foi removido
+            assert_eq!(sc.get_loan_nft_id(loan_id), 0);
+            assert_eq!(sc.get_nft_loan_id(nft_nonce), 0);
+        })
+        .assert_ok();
+}
+
+// Teste de criação de NFT para empréstimo já existente
+#[test]
+#[should_panic(expected = "NFT already exists for this loan")]
+fn test_create_debt_nft_duplicate() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    //let amount = rust_biguint!(5000);
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000;
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Criar primeiro NFT
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        })
+        .assert_ok();
+    
+    // Tentar criar outro NFT para o mesmo empréstimo
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        });
+}
+
+// Teste de queima de NFT inexistente
+#[test]
+#[should_panic(expected = "No NFT exists for this loan")]
+fn test_burn_nonexistent_debt_nft() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Tentar queimar um NFT inexistente
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn_debt_nft(999); // ID de empréstimo inexistente
+        })
+        .assert_ok();
+}
+
+// Teste de criação de NFT com data passada
+#[test]
+#[should_panic(expected = "Due date must be in the future")]
+fn test_create_debt_nft_past_due_date() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    let _amount = rust_biguint!(5000);
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp - 100; // Data no passado
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Tentar criar NFT com data de vencimento no passado
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(5000),
+                interest_rate,
+                due_timestamp
+            );
+        })
+        .assert_ok();
+}
+
+// Teste de criação de NFT com valor zero
+#[test]
+#[should_panic(expected = "Amount must be greater than zero")]
+fn test_create_debt_nft_zero_amount() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Definir variáveis para o teste
+    let loan_id = 1u64;
+    let _amount = rust_biguint!(0); // Valor zero
+    let interest_rate = 500u64;
+    let current_timestamp = 1000000u64;
+    let due_timestamp = current_timestamp + 2592000;
+    
+    // Configurar o timestamp do bloco
+    setup.blockchain_wrapper.set_block_timestamp(current_timestamp);
+    
+    // Tentar criar NFT com valor zero
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.create_debt_nft(
+                loan_id,
+                managed_address!(&setup.user_address),
+                managed_biguint!(0),
+                interest_rate,
+                due_timestamp
+            );
+        });
+}
+
+// Teste de mintagem de tokens para endereço zero
+#[test]
+#[should_panic(expected = "Cannot mint to zero address")]
+fn test_mint_to_zero_address() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    let zero_address = Address::zero();
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Tentar mintar para endereço zero
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&zero_address), managed_biguint!(1000));
+        });
+}
+
+// Teste de queima de mais tokens do que o usuário possui
+#[test]
+#[should_panic(expected = "Insufficient balance for burn")]
+fn test_burn_insufficient_balance() {
+    let mut setup = setup_contract(debt_token::contract_obj);
+    
+    // Emitir o token de dívida primeiro
+    issue_debt_token(&mut setup);
+    
+    // Mintar tokens para o usuário
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&setup.user_address), managed_biguint!(1000));
+        })
+        .assert_ok();
+    
+    // Tentar queimar mais do que o usuário possui
+    let _ = setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn(managed_address!(&setup.user_address), managed_biguint!(2000));
+        });
 }

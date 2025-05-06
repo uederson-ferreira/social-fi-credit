@@ -1015,7 +1015,7 @@ where
     >(
         self,
         user: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, u64>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getUserLoanHistory")
@@ -1029,7 +1029,7 @@ where
     >(
         self,
         user: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, u64>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getUserActiveLoans")
@@ -1043,7 +1043,7 @@ where
     >(
         self,
         user: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Vec<u64>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, u64>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getUserRepaidLoans")

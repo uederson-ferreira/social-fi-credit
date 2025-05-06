@@ -906,7 +906,7 @@ fn test_user_loan_history() {
 
             let active_loans = sc.get_user_active_loans(borrower.clone());
             assert_eq!(active_loans.len(), 1);
-            assert!(matches!(active_loans.get(0), Some(&3u64)));
+            assert!(active_loans.contains(&3u64));
 
             let repaid_loans = sc.get_user_repaid_loans(borrower);
             assert_eq!(repaid_loans.len(), 2);

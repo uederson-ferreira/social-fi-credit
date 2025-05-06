@@ -43,6 +43,8 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
+    /// Inicializa o contrato com o endereço do controlador de empréstimos 
+    /// Este é o único endereço que pode criar NFTs de dívida e mintar/queimar tokens 
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -66,6 +68,8 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    /// Emite o token de dívida como um NFT/SFT 
+    /// Somente o proprietário do contrato pode chamar esta função 
     pub fn issue_debt_token(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -75,6 +79,8 @@ where
             .original_result()
     }
 
+    /// Cria um NFT para representar um empréstimo 
+    /// Somente o controlador de empréstimos pode chamar esta função 
     pub fn create_debt_nft<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -100,6 +106,22 @@ where
             .original_result()
     }
 
+    /// Queima o NFT quando o empréstimo é pago ou inadimplente 
+    pub fn burn_debt_nft<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        loan_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("burnDebtNft")
+            .argument(&loan_id)
+            .original_result()
+    }
+
+    /// Cria novos tokens e os atribui ao destinatário 
+    /// Somente o controlador de empréstimos pode chamar esta função 
     pub fn mint<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
@@ -116,22 +138,130 @@ where
             .original_result()
     }
 
+    /// Destrói tokens do destinatário 
+    /// Somente o controlador de empréstimos pode chamar esta função 
     pub fn burn<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        recipient: Arg0,
+        from: Arg0,
         amount: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("burn")
-            .argument(&recipient)
+            .argument(&from)
             .argument(&amount)
             .original_result()
     }
 
+    /// Transfere tokens para outro endereço 
+    pub fn transfer_tokens<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        to: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("transferTokens")
+            .argument(&to)
+            .argument(&amount)
+            .original_result()
+    }
+
+    /// Permite que outro endereço gaste tokens em seu nome 
+    pub fn approve_tokens<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        spender: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("approveTokens")
+            .argument(&spender)
+            .argument(&amount)
+            .original_result()
+    }
+
+    /// Transfere tokens de um endereço para outro usando allowance 
+    pub fn transfer_tokens_from<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        from: Arg0,
+        to: Arg1,
+        amount: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("transferTokensFrom")
+            .argument(&from)
+            .argument(&to)
+            .argument(&amount)
+            .original_result()
+    }
+
+    /// Retorna o allowance concedido a um spender por um proprietário 
+    pub fn get_allowance<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        owner: Arg0,
+        spender: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAllowance")
+            .argument(&owner)
+            .argument(&spender)
+            .original_result()
+    }
+
+    /// Aumenta o allowance concedido a um spender 
+    pub fn increase_token_allowance<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        spender: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("increaseTokenAllowance")
+            .argument(&spender)
+            .argument(&amount)
+            .original_result()
+    }
+
+    /// Diminui o allowance concedido a um spender 
+    pub fn decrease_token_allowance<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        spender: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("decreaseTokenAllowance")
+            .argument(&spender)
+            .argument(&amount)
+            .original_result()
+    }
+
+    /// Retorna o saldo de tokens de um endereço 
     pub fn balance_of<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -145,6 +275,7 @@ where
             .original_result()
     }
 
+    /// Retorna a oferta total de tokens 
     pub fn total_token_supply(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
@@ -154,16 +285,31 @@ where
             .original_result()
     }
 
-    pub fn burn_debt_nft<
+    /// Retorna o ID do NFT de dívida associado a um empréstimo, ou zero se não existir 
+    pub fn get_loan_nft_id<
         Arg0: ProxyArg<u64>,
     >(
         self,
         loan_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("burnDebtNft")
+            .raw_call("getLoanNftId")
             .argument(&loan_id)
+            .original_result()
+    }
+
+    /// Retorna o ID do empréstimo associado a um NFT, ou zero se não existir 
+    pub fn get_nft_loan_id<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        nft_nonce: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getNftLoanId")
+            .argument(&nft_nonce)
             .original_result()
     }
 }

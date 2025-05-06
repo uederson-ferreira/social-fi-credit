@@ -8,7 +8,9 @@ members = [
   "debt-token/meta",
   "liquidity-pool/meta",
   "loan-controller/meta",
-  "reputation-score/meta"
+  "reputation-score/meta",
+  "tests",
+  "lp-token",
 ]
 
 resolver = "2"

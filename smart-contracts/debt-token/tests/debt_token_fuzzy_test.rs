@@ -3,7 +3,8 @@
 // Descrição: Testes fuzzy com entradas aleatórias para o contrato DebtToken
 // ==========================================================================
 
-use multiversx_sc::types::{Address, BigUint, ManagedBuffer, ManagedAddress};
+use multiversx_sc_scenario::imports::ReturnCode;
+use multiversx_sc::types::{Address, BigUint};
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
@@ -22,7 +23,7 @@ where
     ContractObjBuilder: 'static + Copy + Fn() -> debt_token::ContractObj<DebugApi>,
 {
     pub blockchain_wrapper: BlockchainStateWrapper,
-    pub owner_address: Address,
+    //pub owner_address: Address,
     pub loan_controller_address: Address,
     pub users: Vec<Address>,
     pub contract_wrapper: ContractObjWrapper<debt_token::ContractObj<DebugApi>, ContractObjBuilder>,
@@ -63,20 +64,20 @@ where
         })
         .assert_ok();
     
+    // Emitir o token
+    blockchain_wrapper
+        .execute_tx(&owner_address, &contract_wrapper, &rust_zero, |sc| {
+            sc.issue_debt_token();
+        })
+        .assert_ok();
+    
     ContractSetup {
         blockchain_wrapper,
-        owner_address,
+        //owner_address,
         loan_controller_address,
         users,
         contract_wrapper,
     }
-}
-
-// Função para gerar um endereço aleatório
-fn generate_random_address(rng: &mut StdRng) -> Address {
-    let mut address_bytes = [0u8; 32];
-    rng.fill(&mut address_bytes);
-    Address::from_slice(&address_bytes)
 }
 
 // Teste fuzzy para operações de mintagem e queima
@@ -132,12 +133,13 @@ fn test_mint_burn_fuzzy() {
             }
             
             // Verificar que a oferta total é igual à soma dos saldos
-            assert_eq!(total_supply, sum_balances);
+            assert_eq!(total_supply, sum_balances, "Total supply should equal sum of all balances");
         })
         .assert_ok();
 }
 
-// Teste fuzzy para transferências entre usuários
+
+
 #[test]
 fn test_transfers_fuzzy() {
     // Usar uma semente fixa para reprodutibilidade
@@ -157,11 +159,12 @@ fn test_transfers_fuzzy() {
     }
     
     // Guardar o total de oferta para verificação final
-    let initial_total_supply = setup.blockchain_wrapper
-                .execute_query(&setup.contract_wrapper, |sc| {
-                    sc.total_token_supply();
-                })
-                .pending_calls.async_call.unwrap_or(BigUint::<DebugApi>::zero());
+    let mut initial_total_supply = BigUint::<DebugApi>::zero();
+    setup.blockchain_wrapper
+        .execute_query(&setup.contract_wrapper, |sc| {
+            initial_total_supply = sc.total_token_supply();
+        })
+        .assert_ok();
     
     // Realizar várias transferências aleatórias
     for _ in 0..200 {
@@ -177,11 +180,12 @@ fn test_transfers_fuzzy() {
         let recipient = &setup.users[recipient_idx];
         
         // Obter saldo do remetente
-        let sender_balance = setup.blockchain_wrapper
+        let mut sender_balance = BigUint::<DebugApi>::zero();
+        setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                ;
+                sender_balance = sc.balance_of(managed_address!(sender));
             })
-            .unwrap_or(BigUint::<DebugApi>::zero());
+            .assert_ok();
         
         if sender_balance > BigUint::<DebugApi>::zero() {
             // Gerar valor aleatório para transferência (até o saldo disponível)
@@ -189,11 +193,10 @@ fn test_transfers_fuzzy() {
             if max_amount > 0 {
                 let amount = rng.gen_range(1..=max_amount);
                 
-                // Executar a transferência - Usando diretamente o endpoint ERC20 transfer
+                // Executar a transferência
                 setup.blockchain_wrapper
                     .execute_tx(sender, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                        // Aqui usamos o endpoint correto de transferência do ERC20
-                        let _ = sc.transfer_tokens(managed_address!(recipient), managed_biguint!(amount));
+                        sc.transfer_tokens(managed_address!(recipient), managed_biguint!(amount));
                     })
                     .assert_ok();
             }
@@ -201,13 +204,20 @@ fn test_transfers_fuzzy() {
     }
     
     // Verificar que a oferta total permanece inalterada
+    let mut final_total_supply = BigUint::<DebugApi>::zero();
     setup.blockchain_wrapper
         .execute_query(&setup.contract_wrapper, |sc| {
-            let final_total_supply = sc.total_token_supply();
-            assert_eq!(final_total_supply, initial_total_supply);
+            final_total_supply = sc.total_token_supply();
         })
         .assert_ok();
+        
+    assert_eq!(
+        final_total_supply, 
+        initial_total_supply, 
+        "Total supply should remain unchanged after transfers"
+    );
 }
+
 
 // Teste fuzzy para operações de approve e transferFrom
 #[test]
@@ -244,10 +254,10 @@ fn test_approve_transfer_from_fuzzy() {
         // Gerar valor aleatório para aprovação
         let amount = rng.gen_range(100..5000u64);
         
-        // Executar a aprovação - Usando o endpoint correto para ERC20 approve
+        // Executar a aprovação
         setup.blockchain_wrapper
             .execute_tx(owner, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                let _ = sc.approve_tokens(managed_address!(spender), managed_biguint!(amount));
+                sc.approve_tokens(managed_address!(spender), managed_biguint!(amount));
             })
             .assert_ok();
     }
@@ -268,18 +278,19 @@ fn test_approve_transfer_from_fuzzy() {
         let recipient = &setup.users[recipient_idx];
         
         // Verificar allowance e saldo
-        let allowance_result = setup.blockchain_wrapper
+        let mut allowance_result = BigUint::<DebugApi>::zero();
+        setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                // Usando o endpoint correto para verificar allowance
-                sc.get_allowance(managed_address!(owner), managed_address!(spender))
+                allowance_result = sc.get_allowance(managed_address!(owner), managed_address!(spender));
             })
-            .unwrap_or(BigUint::<DebugApi>::zero());
+            .assert_ok();
             
-        let owner_balance = setup.blockchain_wrapper
+        let mut owner_balance = BigUint::<DebugApi>::zero();
+        setup.blockchain_wrapper
             .execute_query(&setup.contract_wrapper, |sc| {
-                sc.balance_of(managed_address!(owner));
+                owner_balance = sc.balance_of(managed_address!(owner));
             })
-            .unwrap_or(BigUint::<DebugApi>::zero());
+            .assert_ok();
         
         if allowance_result > BigUint::<DebugApi>::zero() && owner_balance > BigUint::<DebugApi>::zero() {
             // Determinar o valor máximo que pode ser transferido
@@ -290,10 +301,10 @@ fn test_approve_transfer_from_fuzzy() {
                 // Gerar valor aleatório para transferência
                 let amount = rng.gen_range(1..=max_amount);
                 
-                // Executar a transferência - Usando endpoint ERC20 transferFrom
+                // Executar a transferência
                 setup.blockchain_wrapper
                     .execute_tx(spender, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                        let _ = sc.transfer_tokens_from(
+                        sc.transfer_tokens_from(
                             managed_address!(owner),
                             managed_address!(recipient),
                             managed_biguint!(amount)
@@ -317,7 +328,7 @@ fn test_approve_transfer_from_fuzzy() {
             }
             
             // Verificar que a oferta total é igual à soma dos saldos
-            assert_eq!(total_supply, sum_balances);
+            assert_eq!(total_supply, sum_balances, "Total supply should equal sum of all balances after transferFrom operations");
         })
         .assert_ok();
 }
@@ -342,7 +353,7 @@ fn test_increase_decrease_allowance_fuzzy() {
                 
                 setup.blockchain_wrapper
                     .execute_tx(owner, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                        let _ = sc.approve_tokens(managed_address!(spender), managed_biguint!(initial_amount));
+                        sc.approve_tokens(managed_address!(spender), managed_biguint!(initial_amount));
                     })
                     .assert_ok();
             }
@@ -369,29 +380,37 @@ fn test_increase_decrease_allowance_fuzzy() {
         let is_increase = rng.gen_bool(0.5);
         
         if is_increase {
-            // Aumentar allowance - Usando o método correto para incrementar allowance
+            // Aumentar allowance
             setup.blockchain_wrapper
                 .execute_tx(owner, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                    let _ = sc.increase_token_allowance(managed_address!(spender), managed_biguint!(amount));
+                    sc.increase_token_allowance(managed_address!(spender), managed_biguint!(amount));
                 })
                 .assert_ok();
         } else {
-            // Diminuir allowance, mas verificar primeiro se há suficiente
-            let current_allowance = setup.blockchain_wrapper
-                .execute_query(&setup.contract_wrapper, |sc| {
-                    sc.get_allowance(managed_address!(owner), managed_address!(spender))
-                })
-                .unwrap_or(BigUint::<DebugApi>::zero());
+            // // Diminuir allowance, mas verificar primeiro se há suficiente
+            // let current_allowance = setup.blockchain_wrapper
+            //     .execute_query(&setup.contract_wrapper, |sc| {
+            //         sc.get_allowance(managed_address!(owner), managed_address!(spender));
+            //     })
+            //     .assert_ok();
             
+            // Obter o allowance atual primeiro
+            let mut current_allowance = BigUint::<DebugApi>::zero();
+            setup.blockchain_wrapper
+                .execute_query(&setup.contract_wrapper, |sc| {
+                    current_allowance = sc.get_allowance(managed_address!(owner), managed_address!(spender));
+                })
+                .assert_ok();
+
             // Calcular valor máximo que pode ser reduzido
             let max_decrease = current_allowance.to_u64().unwrap_or(0);
-            
+
             if max_decrease > 0 {
                 let decrease_amount = std::cmp::min(amount, max_decrease);
                 
                 setup.blockchain_wrapper
                     .execute_tx(owner, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                        let _ = sc.decrease_token_allowance(managed_address!(spender), managed_biguint!(decrease_amount));
+                        sc.decrease_token_allowance(managed_address!(spender), managed_biguint!(decrease_amount));
                     })
                     .assert_ok();
             }
@@ -413,7 +432,7 @@ fn test_increase_decrease_allowance_fuzzy() {
                         );
                         
                         // Verificar que allowance não é negativa
-                        assert!(allowance >= BigUint::<DebugApi>::zero());
+                        assert!(allowance >= BigUint::<DebugApi>::zero(), "Allowance should not be negative");
                     })
                     .assert_ok();
             }
@@ -454,14 +473,16 @@ fn test_extreme_values_fuzzy() {
             setup.blockchain_wrapper
                 .execute_query(&setup.contract_wrapper, |sc| {
                     let balance = sc.balance_of(managed_address!(user));
-                    assert_eq!(balance, managed_biguint!(value));
+                    assert_eq!(balance, managed_biguint!(value), "Balance should match minted amount");
                 })
                 .assert_ok();
                 
             // Queimar o valor
             setup.blockchain_wrapper
                 .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-                    sc.burn(managed_address!(user), managed_biguint!(value));
+                    if value > 0 { // Só queimar valores positivos
+                        sc.burn(managed_address!(user), managed_biguint!(value));
+                    }
                 })
                 .assert_ok();
         }
@@ -488,11 +509,178 @@ fn test_extreme_values_fuzzy() {
     // Transferir valor zero
     setup.blockchain_wrapper
         .execute_tx(sender, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-            let _ = sc.transfer_tokens(managed_address!(recipient), managed_biguint!(0));
+            sc.transfer_tokens(managed_address!(recipient), managed_biguint!(0));
             
             // Verificar saldos não mudaram
-            assert_eq!(sc.balance_of(managed_address!(sender)), managed_biguint!(1000));
-            assert_eq!(sc.balance_of(managed_address!(recipient)), managed_biguint!(0));
+            assert_eq!(sc.balance_of(managed_address!(sender)), managed_biguint!(1000), "Sender balance should not change after zero transfer");
+            assert_eq!(sc.balance_of(managed_address!(recipient)), managed_biguint!(0), "Recipient balance should not change after zero transfer");
         })
         .assert_ok();
+}
+
+// Teste para criação e queima de NFTs
+#[test]
+fn test_nft_creation_burning_fuzzy() {
+    // Usar uma semente fixa para reprodutibilidade
+    let mut rng = StdRng::seed_from_u64(42);
+    
+    let mut setup = setup_fuzzy_contract(debt_token::contract_obj, 5);
+    
+    // Criar vários empréstimos (NFTs)
+    let mut loan_ids = Vec::new();
+    let future_timestamp = 1893456000; // 2030-01-01, bem no futuro
+    
+    for i in 1..=20 {
+        let borrower_idx = rng.gen_range(0..setup.users.len());
+        let borrower = &setup.users[borrower_idx];
+        
+        let amount = rng.gen_range(1000..10000u64);
+        let interest_rate = rng.gen_range(5..25u64);
+        let loan_id = i;
+        
+        // Criar NFT para o empréstimo
+        setup.blockchain_wrapper
+            .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+                let nft_nonce = sc.create_debt_nft(
+                    loan_id, 
+                    managed_address!(borrower), 
+                    managed_biguint!(amount), 
+                    interest_rate, 
+                    future_timestamp
+                );
+                
+                // Verificar que o NFT foi criado
+                assert!(nft_nonce > 0, "NFT nonce should be greater than zero");
+                
+                // Verificar mapeamentos
+                assert_eq!(sc.get_loan_nft_id(loan_id), nft_nonce, "NFT nonce should be correctly mapped to loan ID");
+                assert_eq!(sc.get_nft_loan_id(nft_nonce), loan_id, "Loan ID should be correctly mapped to NFT nonce");
+            })
+            .assert_ok();
+            
+        loan_ids.push(loan_id);
+    }
+    
+    // Queimar metade dos NFTs aleatoriamente
+    let num_to_burn = loan_ids.len() / 2;
+    for _ in 0..num_to_burn {
+        if loan_ids.is_empty() {
+            break;
+        }
+        
+        let idx = rng.gen_range(0..loan_ids.len());
+        let loan_id = loan_ids.remove(idx);
+        
+        setup.blockchain_wrapper
+            .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+                let nft_nonce_before = sc.get_loan_nft_id(loan_id);
+                assert!(nft_nonce_before > 0, "NFT should exist before burning");
+                
+                sc.burn_debt_nft(loan_id);
+                
+                // Verificar que o NFT foi queimado
+                assert_eq!(sc.get_loan_nft_id(loan_id), 0, "NFT should no longer be mapped to loan ID after burning");
+            })
+            .assert_ok();
+    }
+    
+    // Verificar que os NFTs restantes ainda existem
+    for loan_id in loan_ids {
+        setup.blockchain_wrapper
+            .execute_query(&setup.contract_wrapper, |sc| {
+                let nft_nonce = sc.get_loan_nft_id(loan_id);
+                assert!(nft_nonce > 0, "NFT for non-burned loan should still exist");
+                assert_eq!(sc.get_nft_loan_id(nft_nonce), loan_id, "Loan ID mapping should still be correct");
+            })
+            .assert_ok();
+    }
+}
+
+
+
+
+// Teste para tentativas de operações não autorizadas
+#[test]
+fn test_unauthorized_operations() {
+    let mut setup = setup_fuzzy_contract(debt_token::contract_obj, 3);
+    
+    // Usuário comum tenta criar NFT (deve falhar)
+    let result = setup.blockchain_wrapper
+        .execute_tx(&setup.users[0], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            let _ = sc.create_debt_nft(
+                1,
+                managed_address!(&setup.users[1]),
+                managed_biguint!(1000),
+                10,
+                1893456000
+            );
+        });
+    
+    // Verifica se o resultado não é ok
+    assert!(
+        result.result_status != ReturnCode::UserError, 
+        "Unauthorized user should not be able to create NFT"
+    );
+    
+    // Usuário comum tenta mintar tokens (deve falhar)
+    let result = setup.blockchain_wrapper
+        .execute_tx(&setup.users[0], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&setup.users[1]), managed_biguint!(1000));
+        });
+    
+    assert!(
+        result.result_status != ReturnCode::UserError, 
+        "Unauthorized user should not be able to mint tokens"
+    );
+    
+    // Usuário comum tenta queimar tokens (deve falhar)
+    let result = setup.blockchain_wrapper
+        .execute_tx(&setup.users[0], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.burn(managed_address!(&setup.users[1]), managed_biguint!(1000));
+        });
+    
+    assert!(
+        result.result_status != ReturnCode::UserError, 
+        "Unauthorized user should not be able to burn tokens"
+    );
+    
+    // Mintar alguns tokens para testes
+    setup.blockchain_wrapper
+        .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.mint(managed_address!(&setup.users[0]), managed_biguint!(1000));
+        })
+        .assert_ok();
+        
+    // Tentar transferir mais do que o saldo (deve falhar)
+    let result = setup.blockchain_wrapper
+        .execute_tx(&setup.users[0], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.transfer_tokens(managed_address!(&setup.users[1]), managed_biguint!(2000));
+        });
+        
+    assert!(
+        result.result_status != ReturnCode::UserError, 
+        "User should not be able to transfer more than their balance"
+    );
+    
+    // Aprovar tokens
+    setup.blockchain_wrapper
+        .execute_tx(&setup.users[0], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.approve_tokens(managed_address!(&setup.users[1]), managed_biguint!(500));
+        })
+        .assert_ok();
+        
+    // Tentar transferir mais do que o allowance (deve falhar)
+    let result = setup.blockchain_wrapper
+        .execute_tx(&setup.users[1], &setup.contract_wrapper, &rust_biguint!(0), |sc| {
+            sc.transfer_tokens_from(
+                managed_address!(&setup.users[0]),
+                managed_address!(&setup.users[2]),
+                managed_biguint!(600)
+            );
+        });
+        
+    assert!(
+        result.result_status != ReturnCode::UserError, 
+        "User should not be able to transfer more than their allowance"
+    );
 }

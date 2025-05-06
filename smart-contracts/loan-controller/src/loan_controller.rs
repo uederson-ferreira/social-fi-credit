@@ -155,10 +155,6 @@ pub trait LoanController {
     }
 
 
-
-
-    
-    // Paga um empréstimo
     // Paga um empréstimo
     #[payable("*")]
     #[endpoint(repayLoan)]
@@ -659,6 +655,11 @@ pub trait LoanController {
 
     //================================================
 
+
+    #[storage_mapper("last_loan_id_by_user")]
+    fn last_loan_id_by_user(&self) -> MapMapper<ManagedAddress, u64>;
+
+
     #[endpoint(requestLoanSync)]
     fn request_loan_sync(&self, amount: BigUint, duration_days: u64) -> u64 {
         let caller = self.blockchain().get_caller();
@@ -781,6 +782,57 @@ pub trait LoanController {
     fn get_total_investor_shares(&self) -> u64 {
         self.total_investor_shares().get()
     }
+//=============================
+
+/// Add the following two endpoints in `loan_controller/src/lib.rs`, inside the `#[multiversx_sc::contract] pub trait LoanController`:
+
+    // --- Test stub: kick off the eligibility check with default parameters ---
+    #[endpoint(requestReputationCheck)]
+    #[payable("*")]
+    fn request_reputation_check(&self) {
+        let caller = self.blockchain().get_caller();
+        let amount = self.base_loan_amount().get();
+        let term = LoanTerm::Standard;
+        let rs_address = self.reputation_score_address().get();
+        let min_score = self.min_required_score().get();
+
+        // Initiate the on-chain eligibility call
+        self.reputation_score_proxy(rs_address.clone())
+            .is_eligible_for_loan(caller.clone(), min_score)
+            .with_callback(self.callbacks().check_eligibility_callback(
+                caller,
+                amount,
+                term
+            ))
+            .call_and_exit();
+    }
+
+    // --- Wrapper to request a "standard" loan in tests ---
+    #[endpoint(requestLoanStandard)]
+    #[payable("*")]
+    fn request_loan_standard(&self) -> u64 {
+        let caller = self.blockchain().get_caller();
+        let amount = self.base_loan_amount().get();
+        let term = LoanTerm::Standard;
+        let rs_address = self.reputation_score_address().get();
+        let min_score = self.min_required_score().get();
+
+        // Use the same pipeline as `request_loan` but with default values
+        self.reputation_score_proxy(rs_address.clone())
+            .is_eligible_for_loan(caller.clone(), min_score)
+            .with_callback(self.callbacks().check_eligibility_callback(
+                caller.clone(),
+                amount.clone(),
+                term
+            ))
+            .call_and_exit();
+    }
+
+
+//=============================
+
+
+
 
     #[endpoint]
     fn set_standard_loan_term_days(&self, days: u64) {
@@ -1094,7 +1146,7 @@ pub trait LoanController {
 
     /// Returns all loan IDs associated with a user
     #[view(getUserLoanHistory)]
-    fn get_user_loan_history(&self, user: ManagedAddress) -> Vec<u64> {
+    fn get_user_loan_history(&self, user: ManagedAddress) -> ManagedVec<Self::Api, u64> {
         self.user_loans(user.clone())
             .iter()
             .collect()
@@ -1102,8 +1154,8 @@ pub trait LoanController {
 
     /// Returns only the active loan IDs for a user
     #[view(getUserActiveLoans)]
-    fn get_user_active_loans(&self, user: ManagedAddress) -> Vec<u64> {
-        let mut active = Vec::new();
+    fn get_user_active_loans(&self, user: ManagedAddress) -> ManagedVec<Self::Api, u64> {
+        let mut active = ManagedVec::new();
         for loan_id in self.user_loans(user.clone()).iter() {
             if self.loans(loan_id).get().status == LoanStatus::Active {
                 active.push(loan_id);
@@ -1114,8 +1166,8 @@ pub trait LoanController {
 
     /// Returns only the repaid loan IDs for a user
     #[view(getUserRepaidLoans)]
-    fn get_user_repaid_loans(&self, user: ManagedAddress) -> Vec<u64> {
-        let mut repaid = Vec::new();
+    fn get_user_repaid_loans(&self, user: ManagedAddress) -> ManagedVec<Self::Api, u64> {
+        let mut repaid = ManagedVec::new();
         for loan_id in self.user_loans(user.clone()).iter() {
             if self.loans(loan_id).get().status == LoanStatus::Repaid {
                 repaid.push(loan_id);
@@ -1428,6 +1480,14 @@ pub trait LoanController {
     #[storage_mapper("progressive_late_fee_daily_rate")]
     fn progressive_late_fee_daily_rate(&self) -> SingleValueMapper<u64>;
 
+        /// Limite de valor para liquidação (usado nos testes de collateral)
+        #[storage_mapper("liquidation_threshold")]
+        fn liquidation_threshold(&self) -> SingleValueMapper<u64>;
+    
+        /// Penalidade aplicada na liquidação (usado nos testes de collateral)
+        #[storage_mapper("liquidation_penalty")]
+        fn liquidation_penalty(&self) -> SingleValueMapper<u64>;
+    
         
     //=====================================================================
 
