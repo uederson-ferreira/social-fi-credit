@@ -4,6 +4,7 @@ name = "loan-controller"
 version = "0.1.0"
 edition = "2021"
 publish = false
+authors = ["Uederson de Amadeu Ferreira"]
 
 [lib]
 path = "src/loan_controller.rs"

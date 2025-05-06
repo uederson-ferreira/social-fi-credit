@@ -601,6 +601,23 @@ where
             .original_result()
     }
 
+    /// Add the following two endpoints in `loan_controller/src/lib.rs`, inside the `#[multiversx_sc::contract] pub trait LoanController`: 
+    pub fn request_reputation_check(
+        self,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("requestReputationCheck")
+            .original_result()
+    }
+
+    pub fn request_loan_standard(
+        self,
+    ) -> TxTypedCall<Env, From, To, (), Gas, u64> {
+        self.wrapped_tx
+            .raw_call("requestLoanStandard")
+            .original_result()
+    }
+
     pub fn set_standard_loan_term_days<
         Arg0: ProxyArg<u64>,
     >(

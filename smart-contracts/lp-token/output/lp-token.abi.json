@@ -1,0 +1,436 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "lp-token",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.57.1"
+        }
+    },
+    "docs": [
+        "Contrato principal de token",
+        "Implementa funcionalidades similares ao padrão ERC-20 do Ethereum"
+    ],
+    "name": "LpToken",
+    "constructor": {
+        "docs": [
+            "Função de inicialização que é chamada uma única vez quando o contrato é deployado",
+            "@param initial_supply: Quantidade inicial de tokens a ser criada",
+            "@param token_name: Nome completo do token (ex: \"Bitcoin\")",
+            "@param token_ticker: Símbolo/código do token (ex: \"BTC\")",
+            "@param token_decimals: Número de casas decimais do token"
+        ],
+        "inputs": [
+            {
+                "name": "initial_supply",
+                "type": "BigUint"
+            },
+            {
+                "name": "token_name",
+                "type": "bytes"
+            },
+            {
+                "name": "token_ticker",
+                "type": "bytes"
+            },
+            {
+                "name": "token_decimals",
+                "type": "u8"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "docs": [
+                "Retorna o nome completo do token"
+            ],
+            "name": "getName",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Retorna o símbolo/ticker do token"
+            ],
+            "name": "getTicker",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bytes"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Retorna o número de casas decimais do token"
+            ],
+            "name": "getDecimals",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Retorna o suprimento total de tokens em circulação"
+            ],
+            "name": "totalSupply",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Retorna o saldo de tokens de um determinado endereço",
+                "@param address: Endereço a consultar o saldo"
+            ],
+            "name": "balanceOf",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Transfere tokens do remetente (caller) para outro endereço.",
+                "",
+                "# Parâmetros",
+                "- `to`: Endereço de destino que receberá os tokens.",
+                "- `amount`: Quantidade de tokens a transferir.",
+                "",
+                "# Regras",
+                "- A operação é bloqueada se o contrato estiver pausado.",
+                "- A transferência considera a taxa de transação (se configurada)."
+            ],
+            "name": "transfer",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "to",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Retorna quanto um spender está autorizado a gastar em nome de um owner",
+                "@param owner: Dono dos tokens",
+                "@param spender: Endereço autorizado a gastar"
+            ],
+            "name": "allowance",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "owner",
+                    "type": "Address"
+                },
+                {
+                    "name": "spender",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Permite que um endereço autorizado transfira tokens em nome de outro",
+                "@param from: Endereço de origem dos tokens",
+                "@param to: Endereço de destino para receber os tokens",
+                "@param amount: Quantidade de tokens a transferir"
+            ],
+            "name": "transferFrom",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "Address"
+                },
+                {
+                    "name": "to",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Cria novos tokens e os atribui a um endereço (somente owner)",
+                "@param to: Endereço que receberá os novos tokens",
+                "@param amount: Quantidade de tokens a criar"
+            ],
+            "name": "mint",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "to",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Destrói tokens de um endereço específico (somente owner)",
+                "@param address: Endereço de onde os tokens serão destruídos",
+                "@param amount: Quantidade de tokens a destruir"
+            ],
+            "name": "burn",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Permite que um usuário destrua seus próprios tokens",
+                "@param amount: Quantidade de tokens a destruir"
+            ],
+            "name": "burnOwn",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Pausa todas as operações do contrato (somente owner)",
+                "Útil em caso de emergência ou manutenção"
+            ],
+            "name": "pause",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Despausa o contrato, permitindo que as operações voltem ao normal (somente owner)"
+            ],
+            "name": "unpause",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Verifica se o contrato está pausado"
+            ],
+            "name": "isPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Define a porcentagem da taxa cobrada em transferências (somente owner)",
+                "@param fee_percentage: Valor da taxa em basis points (1% = 100, 0.5% = 50)"
+            ],
+            "name": "setFeePercentage",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "fee_percentage",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Retorna a porcentagem atual da taxa em basis points"
+            ],
+            "name": "getFeePercentage",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "approve",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "spender",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "docs": [
+                "Permite que qualquer usuário receba tokens gratuitos (limitado a uma vez por endereço)",
+                "Função demonstrativa - útil para faucets ou airdrops"
+            ],
+            "name": "publicMint",
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        }
+    ],
+    "events": [
+        {
+            "docs": [
+                "Evento emitido quando tokens são transferidos"
+            ],
+            "identifier": "transfer",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "fee",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Evento emitido quando uma aprovação é concedida"
+            ],
+            "identifier": "approve",
+            "inputs": [
+                {
+                    "name": "owner",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "spender",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Evento emitido quando novos tokens são criados"
+            ],
+            "identifier": "mint",
+            "inputs": [
+                {
+                    "name": "to",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "docs": [
+                "Evento emitido quando tokens são destruídos"
+            ],
+            "identifier": "burn",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {}
+}

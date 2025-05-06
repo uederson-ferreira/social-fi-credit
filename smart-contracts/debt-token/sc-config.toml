@@ -1,0 +1,4 @@
+[settings]
+
+[[proxy]]
+path = "src/debt_token_proxy.rs"

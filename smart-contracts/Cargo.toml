@@ -5,12 +5,13 @@ members = [
   "liquidity-pool",
   "loan-controller",
   "reputation-score",
+  "tests",
+  "lp-token",
   "debt-token/meta",
   "liquidity-pool/meta",
   "loan-controller/meta",
   "reputation-score/meta",
-  "tests",
-  "lp-token",
+  "lp-token/meta",
 ]
 
 resolver = "2"
@@ -22,3 +23,4 @@ lto = true
 panic = "abort"
 overflow-checks = true
 codegen-units = 1
+authors = ["Uederson de Amadeu Ferreira"]

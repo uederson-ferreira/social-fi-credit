@@ -15,7 +15,7 @@ multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
 
 multiversx_sc_wasm_adapter::endpoints! {
-    erc20_token
+    lp_token
     (
         init => init
         getName => get_name

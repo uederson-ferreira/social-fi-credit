@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           84
+// Endpoints:                           86
 // Async Callback:                       1
-// Total number of exported functions:  86
+// Total number of exported functions:  88
 
 #![no_std]
 
@@ -62,6 +62,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLiquidationDiscount => get_liquidation_discount
         getInvestorShares => get_investor_shares
         getTotalInvestorShares => get_total_investor_shares
+        requestReputationCheck => request_reputation_check
+        requestLoanStandard => request_loan_standard
         set_standard_loan_term_days => set_standard_loan_term_days
         set_extended_loan_term_days => set_extended_loan_term_days
         set_max_loan_term_days => set_max_loan_term_days

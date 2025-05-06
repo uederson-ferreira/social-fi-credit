@@ -1,0 +1,487 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.85.0",
+            "commitHash": "4d91de4e48198da2e33413efdcd9cd2cc0c46688",
+            "commitDate": "2025-02-17",
+            "channel": "Stable",
+            "short": "rustc 1.85.0 (4d91de4e4 2025-02-17)"
+        },
+        "contractCrate": {
+            "name": "lp-token",
+            "version": "0.0.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.57.1"
+        }
+    },
+    "abi": {
+        "docs": [
+            "Contrato principal de token",
+            "Implementa funcionalidades similares ao padrão ERC-20 do Ethereum"
+        ],
+        "name": "LpToken",
+        "constructor": {
+            "docs": [
+                "Função de inicialização que é chamada uma única vez quando o contrato é deployado",
+                "@param initial_supply: Quantidade inicial de tokens a ser criada",
+                "@param token_name: Nome completo do token (ex: \"Bitcoin\")",
+                "@param token_ticker: Símbolo/código do token (ex: \"BTC\")",
+                "@param token_decimals: Número de casas decimais do token"
+            ],
+            "inputs": [
+                {
+                    "name": "initial_supply",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "token_name",
+                    "type": "bytes"
+                },
+                {
+                    "name": "token_ticker",
+                    "type": "bytes"
+                },
+                {
+                    "name": "token_decimals",
+                    "type": "u8"
+                }
+            ],
+            "outputs": []
+        },
+        "endpoints": [
+            {
+                "docs": [
+                    "Retorna o nome completo do token"
+                ],
+                "name": "getName",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "bytes"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Retorna o símbolo/ticker do token"
+                ],
+                "name": "getTicker",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "bytes"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Retorna o número de casas decimais do token"
+                ],
+                "name": "getDecimals",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "u8"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Retorna o suprimento total de tokens em circulação"
+                ],
+                "name": "totalSupply",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "BigUint"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Retorna o saldo de tokens de um determinado endereço",
+                    "@param address: Endereço a consultar o saldo"
+                ],
+                "name": "balanceOf",
+                "mutability": "readonly",
+                "inputs": [
+                    {
+                        "name": "address",
+                        "type": "Address"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "BigUint"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Transfere tokens do remetente (caller) para outro endereço.",
+                    "",
+                    "# Parâmetros",
+                    "- `to`: Endereço de destino que receberá os tokens.",
+                    "- `amount`: Quantidade de tokens a transferir.",
+                    "",
+                    "# Regras",
+                    "- A operação é bloqueada se o contrato estiver pausado.",
+                    "- A transferência considera a taxa de transação (se configurada)."
+                ],
+                "name": "transfer",
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "to",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Retorna quanto um spender está autorizado a gastar em nome de um owner",
+                    "@param owner: Dono dos tokens",
+                    "@param spender: Endereço autorizado a gastar"
+                ],
+                "name": "allowance",
+                "mutability": "readonly",
+                "inputs": [
+                    {
+                        "name": "owner",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "spender",
+                        "type": "Address"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "BigUint"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Permite que um endereço autorizado transfira tokens em nome de outro",
+                    "@param from: Endereço de origem dos tokens",
+                    "@param to: Endereço de destino para receber os tokens",
+                    "@param amount: Quantidade de tokens a transferir"
+                ],
+                "name": "transferFrom",
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "from",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "to",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Cria novos tokens e os atribui a um endereço (somente owner)",
+                    "@param to: Endereço que receberá os novos tokens",
+                    "@param amount: Quantidade de tokens a criar"
+                ],
+                "name": "mint",
+                "onlyOwner": true,
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "to",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Destrói tokens de um endereço específico (somente owner)",
+                    "@param address: Endereço de onde os tokens serão destruídos",
+                    "@param amount: Quantidade de tokens a destruir"
+                ],
+                "name": "burn",
+                "onlyOwner": true,
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "address",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Permite que um usuário destrua seus próprios tokens",
+                    "@param amount: Quantidade de tokens a destruir"
+                ],
+                "name": "burnOwn",
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Pausa todas as operações do contrato (somente owner)",
+                    "Útil em caso de emergência ou manutenção"
+                ],
+                "name": "pause",
+                "onlyOwner": true,
+                "mutability": "mutable",
+                "inputs": [],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Despausa o contrato, permitindo que as operações voltem ao normal (somente owner)"
+                ],
+                "name": "unpause",
+                "onlyOwner": true,
+                "mutability": "mutable",
+                "inputs": [],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Verifica se o contrato está pausado"
+                ],
+                "name": "isPaused",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "bool"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Define a porcentagem da taxa cobrada em transferências (somente owner)",
+                    "@param fee_percentage: Valor da taxa em basis points (1% = 100, 0.5% = 50)"
+                ],
+                "name": "setFeePercentage",
+                "onlyOwner": true,
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "fee_percentage",
+                        "type": "u64"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Retorna a porcentagem atual da taxa em basis points"
+                ],
+                "name": "getFeePercentage",
+                "mutability": "readonly",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "u64"
+                    }
+                ]
+            },
+            {
+                "name": "approve",
+                "mutability": "mutable",
+                "inputs": [
+                    {
+                        "name": "spender",
+                        "type": "Address"
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint"
+                    }
+                ],
+                "outputs": []
+            },
+            {
+                "docs": [
+                    "Permite que qualquer usuário receba tokens gratuitos (limitado a uma vez por endereço)",
+                    "Função demonstrativa - útil para faucets ou airdrops"
+                ],
+                "name": "publicMint",
+                "mutability": "mutable",
+                "inputs": [],
+                "outputs": []
+            }
+        ],
+        "events": [
+            {
+                "docs": [
+                    "Evento emitido quando tokens são transferidos"
+                ],
+                "identifier": "transfer",
+                "inputs": [
+                    {
+                        "name": "from",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "to",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint",
+                        "indexed": true
+                    },
+                    {
+                        "name": "fee",
+                        "type": "BigUint"
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Evento emitido quando uma aprovação é concedida"
+                ],
+                "identifier": "approve",
+                "inputs": [
+                    {
+                        "name": "owner",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "spender",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint",
+                        "indexed": true
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Evento emitido quando novos tokens são criados"
+                ],
+                "identifier": "mint",
+                "inputs": [
+                    {
+                        "name": "to",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint",
+                        "indexed": true
+                    }
+                ]
+            },
+            {
+                "docs": [
+                    "Evento emitido quando tokens são destruídos"
+                ],
+                "identifier": "burn",
+                "inputs": [
+                    {
+                        "name": "from",
+                        "type": "Address",
+                        "indexed": true
+                    },
+                    {
+                        "name": "amount",
+                        "type": "BigUint",
+                        "indexed": true
+                    }
+                ]
+            }
+        ],
+        "esdtAttributes": [],
+        "hasCallback": false,
+        "types": {}
+    },
+    "code": "0061736d0100000001581060000060027f7f0060027f7f017f60017f017f6000017f60037f7f7f0060017f0060037f7f7f017f60047f7f7f7f017f60027f7e0060017f017e60017e0060047f7f7f7f0060017e017f60047f7e7f7f0060027f7f017e02f5052103656e760b7369676e616c4572726f72000103656e760e626967496e74536574496e743634000903656e76096d4275666665724571000203656e760d6d616e6167656443616c6c6572000603656e76136d616e616765644f776e657241646472657373000603656e76126d427566666572417070656e644279746573000703656e76126d616e616765645369676e616c4572726f72000603656e76106d4275666665724765744c656e677468000303656e761b736d616c6c496e74476574556e7369676e6564417267756d656e74000a03656e7619626967496e74476574556e7369676e6564417267756d656e74000103656e760f6765744e756d417267756d656e7473000403656e7609626967496e74537562000503656e76136d42756666657247657442797465536c696365000803656e760f6d4275666665725365744279746573000703656e760d6d427566666572417070656e64000203656e7609626967496e74416464000503656e76196d42756666657246726f6d426967496e74556e7369676e6564000203656e76126d42756666657253746f726167654c6f6164000203656e76136d42756666657253746f7261676553746f7265000203656e76176d427566666572546f426967496e74556e7369676e6564000203656e760a6d4275666665724e6577000403656e76126d427566666572476574417267756d656e74000203656e76146d427566666572436f707942797465536c696365000803656e7609626967496e74436d70000203656e7609626967496e744d756c000503656e760a626967496e7454446976000503656e760f6d616e6167656457726974654c6f67000103656e760e636865636b4e6f5061796d656e74000003656e760d6d42756666657246696e697368000303656e7616736d616c6c496e7446696e697368556e7369676e6564000b03656e7614626967496e7446696e697368556e7369676e6564000603656e7614736d616c6c496e7446696e6973685369676e6564000b03656e760a626967496e745369676e0003034b4a0d0402010404000c02070303060503030804010102010303090e0501010a0f03050301020c0101020102040404040303020305000101000000000000000000000000000000000000000005030100030616037f01418080080b7f00418884080b7f00419084080b078d0217066d656d6f7279020004696e69740057076765744e616d650058096765745469636b657200590b676574446563696d616c73005a0b746f74616c537570706c79005b0962616c616e63654f66005c087472616e73666572005d09616c6c6f77616e6365005e0c7472616e7366657246726f6d005f046d696e740060046275726e0061076275726e4f776e0062057061757365006307756e7061757365006408697350617573656400651073657446656550657263656e7461676500661067657446656550657263656e74616765006707617070726f766500680a7075626c69634d696e7400690863616c6c4261636b006a0a5f5f646174615f656e6403010b5f5f686561705f6261736503020aac174a2101017f10222101200042005304404180810841111000000b20012000100120010b1901017f418484084184840828020041016b220036020020000b0b0020002001100241004a0b0900200020011000000b0c01017f10222200100320000b0c01017f10222200100420000b150010261025102304400f0b41df830841241000000b2e01017f418080084117102922042000200110051a200441978008410310051a20042002200310051a20041006000b1101017f1022220220002001100d1a20020b1f002000102b2200100741204704402001200241ac810841101028000b20000b0d0020001022220010151a20000b0c00200010222200100920000b1400100a20004604400f0b419a800841191000000b1f00200020012002100b2000102f41ff017104400f0b41b3800841301000000b1500410241012000102022001b4100200041004e1b0b0d002000102f41ff017141016b0b0f002000200120032002100c4100470b08004101410010290b090020002001100e1a0b4601017f230041106b220224002002200141187420014180fe03714108747220014108764180fe03712001411876727236020c20002002410c6a410410051a200241106a24000b1001017f1022220220002001102e20020b0a00200020002001100f0b0f01017f10222201200010101a20010b0d0020001022220010111a20000b3601017f230041106b2202240020024200370308200220014100200241086a103a200020022802002002280204103b200241106a24000b6401017f200341046a41003b00002003410036000020032001a7220441087420044180fe0371410876723b000620004108200150410741062001428002541b6a2204200320044107716a2c00004100482002716b22026b3602042000200220036a3602000b0d00200020012002102910121a0b0b0020002001103710121a0b3701017f230041106b220224002002420037030820022001ad4101200241086a103a200020022802002002280204103b200241106a24000b080020002000103f0ba30102017e027f230041106b22032400200342003703082000103822041007220041094f0440200141e38008410e1041000b20044100200320006b41106a200010311a20032903082102200341106a2400200242388620024280fe0383422886842002428080fc0783421886200242808080f80f834208868484200242088842808080f80f832002421888428080fc07838420024228884280fe038320024238888484840b3201017e027f024020002000103f2201420158044041002001a741016b0d021a0c010b200041bc810841121041000b41010b0b2c01017f41918108411b102922032000100e1a200341978008410310051a20032001200210051a20031006000b0f00200010381022220010131a20000b840101037f230041106b2202240020022001103822031007360208200241003602042002200336020020022001104421032002200110442104200241003a000f20022002410f6a41012001104520022802082002280204470440200141e38008410e1041000b200020022d000f3a00082000200436020420002003360200200241106a24000b820101047f230041106b220324002003410036020c20002003410c6a410420011045200328020c2102200028020421041014210520002802002004200241187420024180fe03714108747220024108764180fe0371200241187672722202200510160440200141f18008410f1041000b2000200220046a360204200341106a240020050b2e01017f2000280200200028020422042001200210310440200341f18008410f1041000b2000200220046a3602040b0d0010321a20002001103710340b1601017f10321a101422022001100e1a2000200210340b1201017f10322202200020011029103420020b5001027f230041106b22022400200220001007220341187420034180fe03714108747220034108764180fe03712003411876727236020c20012002410c6a410410051a200120001033200241106a24000b1a01017f41ce8108410a102922022000103320022001103320020b0a0041e08108410a10290b0a0041f18108410e10290b0a0041878208410c10290b0a0041938208410610290b1401017f419982084108102922012000103320010b0d002000103041ff01714101460b1400200028020020012802001017417f73411f760b08002000104f10420be30102047f017e230041106b2204240020042000104f104236020c2004410c6a2002105104400240104c103e22075004401022220342001001200228020021020c010b200710212105102222032002280200220220051018200320034290ce00102110190b20022003103521052000104f200428020c20021035103c2001104f10422202200510362001104f2002103c20031050044010262202104f10422206200310362002104f2006103c0b41ff81084108104822022000104720022001104720022005104610321a200220031037101a200441106a24000f0b41f9820841141024000b1400104e10404504400f0b418d830841121024000b7501027f230041106b2203240020032000104f104236020c2003410c6a2001105145044041c28308411d1024000b2000104f200328020c200128020022011035103c104d1042220220022001102e104d2002103c41d881084104104822022000104720022001104620021032101a200341106a24000b4901017f2001105004402000104f10422202200110362000104f2002103c104d1042220220011036104d2002103c41dc81084104104822022000104720022001104620021032101a0b0b8d0102067f017e230041106b22012400101b4104102d4100102c21024101102b4102102b21034103100822064280025a044041ba8208410e41e38008410e1028000b2006a72104104b210541014100102922001049200320001049200120043a000f20002001410f6a410110051a2005200010121a102520021056104e4100103d104c42001039200141106a24000b2b01017f230041106b22002400101b4100102d200041046a104b10432000280204101c1a200041106a24000b2b01017f230041106b22002400101b4100102d200041046a104b10432000280208101c1a200041106a24000b2a01017f230041106b22002400101b4100102d200041046a104b1043200031000c101d200041106a24000b0e00101b4100102d104d1042101e0b1600101b4101102d410041af82084107102a1052101e0b3c01027f230041106b22002400101b4102102d410041a882084102102a210120004101102c36020c1054102520012000410c6a1053200041106a24000b2200101b4102102d410041aa82084105102a410141a182084107102a104a1042101e0b840101047f230041106b22002400101b4103102d410041b682084104102a2101410141a882084102102a210220004102102c36020810542000200110252203104a104236020c2000410c6a200041086a105145044041e3820841161024000b20012003104a200028020c20002802081035103c20012002200041086a1053200041106a24000b1a00101b10274102102d410041a882084102102a4101102c10560b3601027f230041106b22002400101b10274102102d410041af82084107102a20004101102c36020c2000410c6a1055200041106a24000b2c01017f230041106b22002400101b4101102d20004100102c36020c10252000410c6a1055200041106a24000b1000101b10274100102d104e4101103d0b1000101b10274100102d104e4100103d0b0f00101b4100102d104e1040ad101f0b4001017e101b10274101102d4100100821000240102510261023044020004291ce005a0d01104c200010390f0b419f8308410c1024000b41ab830841171024000b0e00101b4100102d104c103e101d0b4a01047f101b4102102d410041a182084107102a21014101102c21021054102522032001104a2002103c41ea81084107104822002003104720002001104720002002104620001032101a0b3201027f101b4100102d105410252100420a1021210120001052103041ff0171044041c88208411b1024000b2000200110560b02000b0b97040200418080080b8304617267756d656e74206465636f6465206572726f722028293a2077726f6e67206e756d626572206f6620617267756d656e747363616e6e6f74207375627472616374206265636175736520726573756c7420776f756c64206265206e65676174697665696e70757420746f6f206c6f6e67696e70757420746f6f2073686f72746361737420746f20693634206572726f7273746f72616765206465636f6465206572726f7220286b65793a20626164206172726179206c656e677468696e707574206f7574206f662072616e6765616c6c6f77616e6365736275726e6d696e74746f6b656e5f696e666f617070726f76656665655f70657263656e746167657472616e73666572746f74616c5f737570706c7970617573656462616c616e6365737370656e646572746f6f776e65726164647265737366726f6d746f6b656e5f646563696d616c73616c726561647920636c61696d6564206672656520746f6b656e73696e73756666696369656e7420616c6c6f77616e6365696e73756666696369656e742062616c616e6365636f6e747261637420697320706175736564756e617574686f72697a65646665652070657263656e7461676520746f6f2068696768696e73756666696369656e742062616c616e636520666f72206275726e456e64706f696e742063616e206f6e6c792062652063616c6c6564206279206f776e657200418484080b0438ffffff",
+    "report": {
+        "imports": [
+            "bigIntAdd",
+            "bigIntCmp",
+            "bigIntFinishUnsigned",
+            "bigIntGetUnsignedArgument",
+            "bigIntMul",
+            "bigIntSetInt64",
+            "bigIntSign",
+            "bigIntSub",
+            "bigIntTDiv",
+            "checkNoPayment",
+            "getNumArguments",
+            "mBufferAppend",
+            "mBufferAppendBytes",
+            "mBufferCopyByteSlice",
+            "mBufferEq",
+            "mBufferFinish",
+            "mBufferFromBigIntUnsigned",
+            "mBufferGetArgument",
+            "mBufferGetByteSlice",
+            "mBufferGetLength",
+            "mBufferNew",
+            "mBufferSetBytes",
+            "mBufferStorageLoad",
+            "mBufferStorageStore",
+            "mBufferToBigIntUnsigned",
+            "managedCaller",
+            "managedOwnerAddress",
+            "managedSignalError",
+            "managedWriteLog",
+            "signalError",
+            "smallIntFinishSigned",
+            "smallIntFinishUnsigned",
+            "smallIntGetUnsignedArgument"
+        ],
+        "isMemGrow": false,
+        "eiCheck": {
+            "eiVersion": "1.3",
+            "ok": true
+        },
+        "codeReport": {
+            "path": "../output/lp-token.wasm",
+            "size": 4765,
+            "hasAllocator": false,
+            "hasPanic": "None"
+        }
+    }
+}

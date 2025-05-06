@@ -12,7 +12,11 @@
 // ==========================================================================
 
 #![no_std]
+#[allow(unused_imports)]
+use multiversx_sc::imports::*;
 multiversx_sc::imports!();
+
+pub mod debt_token_proxy;
 
 #[multiversx_sc::contract]
 pub trait DebtToken {

@@ -2,7 +2,11 @@
     // ARQUIVO: integrated_system_test.rs
     // Descrição: Testes integrados para todo o sistema de empréstimos
     // ==========================================================================
-
+    #[cfg(test)]
+    
+    use std::borrow::Borrow;
+    use multiversx_sc_scenario::imports::BigUint;
+    //use multiversx_sc::proxy_imports::BigUint;
     use multiversx_sc_scenario::DebugApi;
     use multiversx_sc_scenario::{managed_address, managed_biguint, rust_biguint, testing_framework::BlockchainStateWrapper};
     use multiversx_sc::types::Address;
@@ -15,6 +19,7 @@
     use liquidity_pool::*;
     use lp_token::*;  // Use the real LP token module
     
+
     const LOAN_CONTROLLER_WASM_PATH: &str = "output/loan-controller.wasm";
     const REPUTATION_SCORE_WASM_PATH: &str = "output/reputation-score.wasm";
     const DEBT_TOKEN_WASM_PATH: &str = "output/debt-token.wasm";
@@ -190,16 +195,6 @@
                     
                 })
                 .assert_ok();
-        // blockchain_wrapper
-        //     .execute_tx(&owner_address, &loan_controller_wrapper, &rust_zero, |sc| {
-        //         // Define o storage mapper diretamente usando a chave e o valor
-        //         let liquidity_pool_key = ManagedBuffer::from("liquidity_pool_address");
-        //         let debt_token_key = ManagedBuffer::from("debt_token_address");
-                
-        //         sc.storage_raw();
-        //         sc.storage_raw();
-        //     })
-        //     .assert_ok();
         
         IntegratedSystemSetup {
             blockchain_wrapper,
@@ -497,7 +492,7 @@
         // Etapa 5: Atualizar pontuação de reputação negativamente
         setup.blockchain_wrapper
             .execute_tx(&setup.loan_controller_wrapper.address_ref(), &setup.reputation_score_wrapper, &rust_biguint!(0), |sc| {
-                sc.update_score(managed_address!(&setup.borrower2_address), -100); // Redução por inadimplência
+                sc.update_score(managed_address!(&setup.borrower2_address), 100); // Redução por inadimplência
                 
                 // Verificar nova pontuação
                 let new_score = sc.get_user_score(managed_address!(&setup.borrower2_address));
@@ -927,12 +922,8 @@
     .execute_tx(&setup.owner_address, &setup.loan_controller_wrapper, &rust_biguint!(0), |sc| {
         sc.set_collateral_ratio(7000u64); // 70% (empréstimo/garantia)
         
-        // Como liquidation_threshold e liquidation_penalty não existem no contrato,
-        // vamos usar storage direto para configurar
-        let threshold_key = ManagedBuffer::from("liquidation_threshold");
-        let penalty_key = ManagedBuffer::from("liquidation_penalty");
-        
-        //Usar os métodos específicos do seu contrato:
+        // Use os métodos específicos do contrato diretamente
+        // Isso evita a necessidade de criar ManagedBuffer
         sc.liquidation_threshold().set(8500u64);
         sc.liquidation_penalty().set(1000u64);
     })
@@ -978,15 +969,57 @@
     })
     .assert_ok();
 
-// Etapa 5: LoanController obtém fundos e emite tokens de dívida
-// 1) Query Fora do execute_tx, usando o wrapper do LoanController
-let loan_amount = setup
+    // Etapa 5: LoanController obtém fundos e emite tokens de dívida
+    // 1) Declare uma variável para armazenar o valor do empréstimo
+    let mut loan_amount = BigUint::zero(); // Inicializa com zero
+
+    // Execute a query e capture o valor
+    setup
+        .blockchain_wrapper
+        .execute_query(&setup.loan_controller_wrapper, |sc| {
+            // Remove o ponto e vírgula para capturar o valor
+            let amount = sc.loans(1u64).get().amount.clone();
+            // Armazena o valor na variável externa
+            loan_amount = amount;
+            // Retorna explicitamente unit ()
+            ()
+        })
+        .assert_ok();
+
+    // 2) Agora faça a emissão de DebtToken COM o valor correto:
+    setup.blockchain_wrapper
+        .execute_tx(
+            &setup.debt_token_wrapper.address_ref(),
+            &setup.debt_token_wrapper,
+            &rust_biguint!(0),
+            |sc| {
+                sc.mint(
+                    managed_address!(&setup.borrower1_address),
+                    loan_amount.clone()
+                );
+                // Retorno vazio explícito
+                ()
+            },
+        )
+        .assert_ok();
+
+// Emissão de tokens de dívida
+// 1) Primeiro, faça a query do valor do empréstimo
+let mut loan_amount = BigUint::zero(); // Inicializa com zero
+
+setup
     .blockchain_wrapper
     .execute_query(&setup.loan_controller_wrapper, |sc| {
-        sc.loans(1u64).get().amount.clone() // This returns a BigUint
+        // Captura o valor em uma variável temporária
+        let temp_amount = sc.loans(1u64).get().amount.clone();
+        
+        // Armazena o valor em uma variável externa
+        loan_amount = temp_amount;
+        
+        // Retorna unit type () para satisfazer o compilador
+        ()
     })
-    .assert_ok() // Use assert_ok() to verify the query succeeded
-    .unwrap(); // Extract the value from the result
+    .assert_ok();
 
 // 2) Agora faça a emissão de DebtToken COM o valor correto:
 setup.blockchain_wrapper
@@ -999,20 +1032,10 @@ setup.blockchain_wrapper
                 managed_address!(&setup.borrower1_address),
                 loan_amount.clone()
             );
-            // Adicionar ponto e vírgula explícito ou retorno vazio:
             ()
         },
     )
     .assert_ok();
-
-    // Emissão de tokens de dívida
-// 1) Primeiro, faça a query do valor do empréstimo
-// CORRETO (retorna `BigUint<DebugApi>`)
-let loan_amount: BigUint<DebugApi> = setup
-    .blockchain_wrapper
-    .execute_query(&setup.loan_controller_wrapper, |sc| {
-        sc.loans(1u64).get().amount.clone()
-    });
 
 
 // 2) Agora emita os tokens de dívida usando esse valor

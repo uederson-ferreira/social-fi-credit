@@ -581,6 +581,31 @@
             ]
         },
         {
+            "docs": [
+                "Add the following two endpoints in `loan_controller/src/lib.rs`, inside the `#[multiversx_sc::contract] pub trait LoanController`:"
+            ],
+            "name": "requestReputationCheck",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "requestLoanStandard",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
             "name": "set_standard_loan_term_days",
             "mutability": "mutable",
             "inputs": [

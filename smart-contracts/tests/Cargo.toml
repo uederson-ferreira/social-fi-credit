@@ -2,6 +2,7 @@
 name = "integration-tests"
 version = "0.1.0"
 edition = "2021"
+authors = ["Uederson de Amadeu Ferreira"]
 
 [lib]
 name = "integration_tests"

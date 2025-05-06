@@ -1,9 +1,10 @@
 [package]
 name = "lp-token"
 version = "0.0.0"
-authors = ["you"]
+authors = ["Uederson de Amadeu Ferreira"]
 edition = "2021"
 publish = false
+
 
 [lib]
 path = "src/lib.rs"
