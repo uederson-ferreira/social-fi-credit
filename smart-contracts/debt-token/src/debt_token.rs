@@ -13,10 +13,22 @@
 
 #![no_std]
 #[allow(unused_imports)]
-use multiversx_sc::imports::*;
+use multiversx_sc::{derive_imports::*, imports::*};
+use multiversx_sc::proxy_imports::type_abi;
+use multiversx_sc::proxy_imports::TopEncode;
+use multiversx_sc::proxy_imports::TopDecode;
+
 multiversx_sc::imports!();
 
 pub mod debt_token_proxy;
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Clone, Copy)]
+pub enum Status {
+    FundingPeriod,
+    Successful,
+    Failed,
+}
 
 #[multiversx_sc::contract]
 pub trait DebtToken {
@@ -38,6 +50,7 @@ pub trait DebtToken {
 
     /// Emite o token de dívida como um NFT/SFT
     /// Somente o proprietário do contrato pode chamar esta função
+    #[payable("EGLD")]
     #[only_owner]
     #[endpoint(issueDebtToken)]
     fn issue_debt_token(&self) {
@@ -169,6 +182,61 @@ pub trait DebtToken {
         // Emitir evento para auditoria
         self.debt_nft_burned_event(loan_id, nft_nonce);
     }
+
+    //=====================================
+
+    //==========private===================
+    fn get_current_time(&self) -> u64 {
+        self.blockchain().get_block_timestamp()
+    }
+    //==========private===================
+
+    // No seu contrato, adicione temporariamente:
+    #[view]
+    fn get_loan_nft_id_for_test(&self, loan_id: u64) -> u64 {
+        let nft_id = self.get_loan_nft_id(loan_id);
+        // Este método funciona porque em algumas versões do MultiversX,
+        // o valor retornado por uma função #[view] é automaticamente
+        // tratado como resultado da consulta
+        nft_id
+    }
+
+
+    #[view(getCurrentFunds)]
+    fn get_current_funds(&self) -> BigUint {
+        self.blockchain().get_sc_balance(&EgldOrEsdtTokenIdentifier::egld(), 0)
+    }
+
+    #[view]
+    fn status(&self) -> Status {
+        if self.get_current_time() <= self.deadline().get() {
+            Status::FundingPeriod
+        } else if self.get_current_funds() >= self.target().get() {
+            Status::Successful
+        } else {
+            Status::Failed
+        }
+    }
+
+    #[view(getTarget)]
+    #[storage_mapper("target")]
+    fn target(&self) -> SingleValueMapper<BigUint>;
+
+    #[view(getDeadline)]
+    #[storage_mapper("deadline")]
+    fn deadline(&self) -> SingleValueMapper<u64>;
+
+    #[view(getDeposit)]
+    #[storage_mapper("deposit")]
+    fn deposit(&self, donor: &ManagedAddress) -> SingleValueMapper<BigUint>;
+
+    /// Retorna o ID do token de dívida
+    #[view(debtTokenId)]
+    fn debt_token_id_view(&self) -> TokenIdentifier {
+        self.debt_token_id().get()
+    }
+
+    //===========================================
 
     // ============================
     // Funcionalidades de ERC20

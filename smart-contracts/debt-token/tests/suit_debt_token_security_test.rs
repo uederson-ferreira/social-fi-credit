@@ -730,9 +730,43 @@ fn test_zero_transfer() {
         });
 }
 
+// Add this macro to your test file
+macro_rules! assert_tx_panic {
+    ($setup:expr, $caller:expr, $contract:expr, $amount:expr, $expected_msg:expr, $callback:expr) => {
+        let result = $setup.blockchain_wrapper
+            .execute_tx($caller, $contract, $amount, $callback);
+        
+        match result {
+            Err(err) => {
+                let err_str = format!("{:?}", err);
+                assert!(err_str.contains($expected_msg), 
+                       "Expected error message '{}' but got '{}'", 
+                       $expected_msg, err_str);
+            },
+            Ok(_) => panic!("Expected transaction to fail with '{}', but it succeeded", $expected_msg),
+        }
+    };
+}
+trait BlockchainTxTester {
+    fn expect_tx_panic<F>(&mut self, caller: &Address, contract: &ContractObjWrapper<debt_token::ContractObj<DebugApi>>, amount: &BigUint, expected_msg: &str, callback: F)
+    where
+        F: FnOnce(&mut debt_token::ContractObj<DebugApi>);
+}
+
+impl BlockchainTxTester for BlockchainStateWrapper {
+    fn expect_tx_panic<F>(&mut self, caller: &Address, contract: &ContractObjWrapper<debt_token::ContractObj<DebugApi>>, amount: &BigUint, expected_msg: &str, callback: F)
+    where
+        F: FnOnce(&mut debt_token::ContractObj<DebugApi>),
+    {
+        let result = self.execute_tx(caller, contract, amount, callback);
+        
+        assert!(!result.result_status.is_success(), "Expected transaction to fail, but it succeeded");
+        // Additional error message checking if possible
+    }
+}
+
 // Teste de mint para endereço zero
 #[test]
-#[should_panic(expected = "Cannot mint to zero address")]
 fn test_mint_to_zero_address() {
     let mut setup = setup_contract(debt_token::contract_obj);
     
@@ -742,12 +776,27 @@ fn test_mint_to_zero_address() {
     // Endereço zero
     let zero_address = Address::zero();
     
-    // Tentar mintar para endereço zero
-    let _ = setup.blockchain_wrapper
+    // Using Option 1 (macro approach)
+    assert_tx_panic!(
+        setup,
+        &setup.loan_controller_address,
+        &setup.contract_wrapper,
+        &rust_biguint!(0),
+        "Cannot mint to zero address",
+        |sc| {
+            sc.mint(managed_address!(&zero_address), managed_biguint!(1000));
+        }
+    );
+    
+    // Or using Option 3 (direct result handling)
+    let result = setup.blockchain_wrapper
         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
             sc.mint(managed_address!(&zero_address), managed_biguint!(1000));
         });
+    
+    assert!(!result.result_status.is_success(), "Expected transaction to fail, but it succeeded");
 }
+
 
 // Teste de tentativa de operações sem emitir o token primeiro
 #[test]

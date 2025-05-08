@@ -72,9 +72,8 @@ where
     /// Somente o proprietário do contrato pode chamar esta função 
     pub fn issue_debt_token(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("issueDebtToken")
             .original_result()
     }
@@ -117,6 +116,65 @@ where
             .payment(NotPayable)
             .raw_call("burnDebtNft")
             .argument(&loan_id)
+            .original_result()
+    }
+
+    pub fn get_current_funds(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCurrentFunds")
+            .original_result()
+    }
+
+    pub fn status(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, Status> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("status")
+            .original_result()
+    }
+
+    pub fn target(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTarget")
+            .original_result()
+    }
+
+    pub fn deadline(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDeadline")
+            .original_result()
+    }
+
+    pub fn deposit<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        donor: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDeposit")
+            .argument(&donor)
+            .original_result()
+    }
+
+    /// Retorna o ID do token de dívida 
+    pub fn debt_token_id_view(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, TokenIdentifier<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("debtTokenId")
             .original_result()
     }
 
@@ -312,4 +370,12 @@ where
             .argument(&nft_nonce)
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, PartialEq, Clone, Copy)]
+pub enum Status {
+    FundingPeriod,
+    Successful,
+    Failed,
 }
