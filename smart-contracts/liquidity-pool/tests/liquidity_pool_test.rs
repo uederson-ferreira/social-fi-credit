@@ -81,7 +81,7 @@ where
 
 // Teste de inicialização do contrato
 #[test]
-fn test_init() {
+fn l_t_init() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Verificar estado inicial
@@ -117,7 +117,7 @@ fn test_init() {
 
 // Teste de depósito de liquidez
 #[test]
-fn test_deposit_liquidity() {
+fn l_t_deposit_liquidity() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Depósito de liquidez pelo provedor
@@ -149,7 +149,7 @@ fn test_deposit_liquidity() {
 
 // Teste de retirada de liquidez
 #[test]
-fn test_withdraw_liquidity() {
+fn l_t_withdraw_liquidity() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Primeiro, fazer um depósito
@@ -185,7 +185,7 @@ fn test_withdraw_liquidity() {
 
 // Teste de empréstimo de fundos
 #[test]
-fn test_borrow_funds() {
+fn l_t_borrow_funds() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez ao pool
@@ -226,7 +226,7 @@ fn test_borrow_funds() {
 
 // Teste de pagamento de empréstimo
 #[test]
-fn test_repay_loan() {
+fn l_t_repay_loan() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Preparar o cenário: adicionar liquidez e fazer um empréstimo
@@ -284,7 +284,7 @@ fn test_repay_loan() {
 
 // Teste de cálculo de taxas de juros dinâmicas
 #[test]
-fn test_dynamic_interest_rate() {
+fn l_t_dynamic_interest_rate() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Verificar cálculo de taxa em diferentes níveis de utilização
@@ -320,7 +320,7 @@ fn test_dynamic_interest_rate() {
 
 // Teste de distribuição de juros para provedores de liquidez
 #[test]
-fn test_interest_distribution() {
+fn l_t_interest_distribution() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar dois provedores de liquidez
@@ -397,7 +397,7 @@ fn test_interest_distribution() {
 
 // Teste de atualização da taxa de utilização
 #[test]
-fn test_update_utilization_rate() {
+fn l_t_update_utilization_rate() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
@@ -443,7 +443,7 @@ fn test_update_utilization_rate() {
 
 // Teste de pausa e despausa do contrato
 #[test]
-fn test_pause_unpause() {
+fn l_t_pause_unpause() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Pausar o contrato
@@ -491,7 +491,7 @@ fn test_pause_unpause() {
 
 // Teste de atualização de contratos relacionados
 #[test]
-fn test_update_related_contracts() {
+fn l_t_update_related_contracts() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Criar novos endereços para os contratos
@@ -546,7 +546,7 @@ fn test_update_related_contracts() {
 
 // Teste de utilização de reservas
 #[test]
-fn test_use_reserves() {
+fn l_t_use_reserves() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez e acumular reservas
@@ -589,7 +589,7 @@ fn test_use_reserves() {
 
 // Teste de atualização de parâmetros
 #[test]
-fn test_update_parameters() {
+fn l_t_update_parameters() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Atualizar parâmetros

@@ -86,7 +86,7 @@ where
 
 // Teste de tentativa de empréstimo não autorizado
 #[test]
-fn test_unauthorized_borrow() {
+fn l_s_unauthorized_borrow() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez ao pool
@@ -120,7 +120,7 @@ fn test_unauthorized_borrow() {
 
 // Teste de proteção contra duplo pagamento
 #[test]
-fn test_double_repayment_protection() {
+fn l_s_double_repayment_protection() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Preparar o cenário: adicionar liquidez e fazer um empréstimo
@@ -167,7 +167,7 @@ fn test_double_repayment_protection() {
 
 // Teste contra ataque de reentrância
 #[test]
-fn test_reentrancy_attack() {
+fn l_s_reentrancy_attack() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Preparar o cenário
@@ -203,7 +203,7 @@ fn test_reentrancy_attack() {
 
 // Teste contra empréstimo com liquidez insuficiente
 #[test]
-fn test_borrow_with_insufficient_liquidity() {
+fn l_s_borrow_with_insufficient_liquidity() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez limitada
@@ -230,7 +230,7 @@ fn test_borrow_with_insufficient_liquidity() {
 
 // Teste contra uso malicioso de reservas
 #[test]
-fn test_unauthorized_reserve_usage() {
+fn l_s_unauthorized_reserve_usage() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Configurar cenário com algumas reservas
@@ -276,7 +276,7 @@ fn test_unauthorized_reserve_usage() {
 
 // Teste contra manipulação de liquidez
 #[test]
-fn test_liquidity_manipulation() {
+fn l_s_liquidity_manipulation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -305,7 +305,7 @@ fn test_liquidity_manipulation() {
 
 // Teste contra ataque de flash loan
 #[test]
-fn test_flash_loan_attack() {
+fn l_s_flash_loan_attack() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
@@ -335,7 +335,7 @@ fn test_flash_loan_attack() {
 
 // Teste contra manipulação da taxa de utilização
 #[test]
-fn test_utilization_rate_manipulation() {
+fn l_s_utilization_rate_manipulation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
@@ -371,7 +371,7 @@ fn test_utilization_rate_manipulation() {
 
 // Teste contra ataque de bloqueio de liquidez
 #[test]
-fn test_liquidity_lockup_attack() {
+fn l_s_liquidity_lockup_attack() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
@@ -402,7 +402,7 @@ fn test_liquidity_lockup_attack() {
 
 // Teste contra manipulação de reservas
 #[test]
-fn test_reserve_manipulation() {
+fn l_s_reserve_manipulation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez e gerar algumas reservas
@@ -446,7 +446,7 @@ fn test_reserve_manipulation() {
 
 // Teste de proteção contra pausa maliciosa
 #[test]
-fn test_malicious_pause() {
+fn l_s_malicious_pause() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Tentativa de pausa por um atacante
@@ -476,7 +476,7 @@ fn test_malicious_pause() {
 
 // Teste contra ataque de saldo de empréstimo errado
 #[test]
-fn test_incorrect_borrow_balance() {
+fn l_s_incorrect_borrow_balance() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Configurar um cenário com um empréstimo
@@ -529,7 +529,7 @@ fn test_incorrect_borrow_balance() {
 
 // Teste de proteção contra ataque de overflow/underflow
 #[test]
-fn test_overflow_underflow_protection() {
+fn l_s_overflow_underflow_protection() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
@@ -572,7 +572,7 @@ fn test_overflow_underflow_protection() {
 
 // Teste contra ataque de DNS (Denial of Service)
 #[test]
-fn test_dos_attack_protection() {
+fn l_s_dos_attack_protection() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Configurar muitos pequenos depósitos (tentativa de DOS)
@@ -633,7 +633,7 @@ fn test_dos_attack_protection() {
 // Teste 1: Validação de entrada
 // Teste para validação de valor mínimo de depósito
 #[test]
-fn test_min_deposit_validation() {
+fn l_s_min_deposit_validation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     setup.blockchain_wrapper
@@ -645,7 +645,7 @@ fn test_min_deposit_validation() {
 
 // Teste para validação de endereço zero
 #[test]
-fn test_zero_address_validation() {
+fn l_s_zero_address_validation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     setup.blockchain_wrapper
@@ -659,7 +659,7 @@ fn test_zero_address_validation() {
 
 // Teste 2: Testes de integração com contratos externos
 #[test]
-fn test_external_contract_integration() {
+fn l_s_external_contract_integration() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Configurar o endereço do token LP
@@ -701,7 +701,7 @@ fn test_external_contract_integration() {
 
 // Teste 3: Testes de atualização de estado
 #[test]
-fn test_state_updates() {
+fn l_s_state_updates() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -756,7 +756,7 @@ fn test_state_updates() {
 
 // Teste 4: Testes de condições de corrida
 #[test]
-fn test_race_conditions() {
+fn l_s_race_conditions() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -797,7 +797,7 @@ fn test_race_conditions() {
 // Teste 5: Testes de recuperação de falhas
 // Teste para pausa do contrato
 #[test]
-fn test_contract_pause() {
+fn l_s_contract_pause() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -824,7 +824,7 @@ fn test_contract_pause() {
 
 // Teste para operações rejeitadas quando pausado
 #[test]
-fn test_operations_when_paused() {
+fn l_s_operations_when_paused() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -851,7 +851,7 @@ fn test_operations_when_paused() {
 
 // Teste para despausar o contrato
 #[test]
-fn test_contract_unpause() {
+fn l_s_contract_unpause() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -885,7 +885,7 @@ fn test_contract_unpause() {
 
 // Teste para operações após despausar
 #[test]
-fn test_operations_after_unpause() {
+fn l_s_operations_after_unpause() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -930,7 +930,7 @@ fn test_operations_after_unpause() {
 
 // Teste 6: Testes para funções de cálculo de juros
 #[test]
-fn test_interest_calculation() {
+fn l_s_interest_calculation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -1025,7 +1025,7 @@ fn test_interest_calculation() {
 // Teste 7: Testes para limites máximos e proteção contra valores extremos
 // Teste para limite máximo de taxa de rendimento
 #[test]
-fn test_excessive_yield_rate() {
+fn l_s_excessive_yield_rate() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Tentar inicializar com taxa de rendimento anual acima do máximo
@@ -1039,7 +1039,7 @@ fn test_excessive_yield_rate() {
 
 // Teste para limite máximo de taxa de reserva
 #[test]
-fn test_excessive_reserve_rate() {
+fn l_s_excessive_reserve_rate() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -1059,7 +1059,7 @@ fn test_excessive_reserve_rate() {
 
 // Teste para retirada excessiva
 #[test]
-fn test_excessive_withdrawal() {
+fn l_s_excessive_withdrawal() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -1082,7 +1082,7 @@ fn test_excessive_withdrawal() {
 
 // Teste 8: Testes para funções de acesso sensíveis
 #[test]
-fn test_sensitive_function_access() {
+fn l_s_sensitive_function_access() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Tentar acessar funções administrativas como atacante
@@ -1122,7 +1122,7 @@ fn test_sensitive_function_access() {
 
 // Teste 9: Teste contra manipulações de timestamps
 #[test]
-fn test_timestamp_manipulation() {
+fn l_s_timestamp_manipulation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez inicial
@@ -1170,7 +1170,7 @@ fn test_timestamp_manipulation() {
 
 // Teste 10: Teste de segurança para consistência de tokens
 #[test]
-fn test_token_consistency() {
+fn l_s_token_consistency() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez com um tipo de token
@@ -1212,7 +1212,7 @@ fn test_token_consistency() {
 
 // Teste 11: Teste de segurança para preservação de fundos em emergências
 #[test]
-fn test_emergency_fund_preservation() {
+fn l_s_emergency_fund_preservation() {
     let mut setup = setup_contract(liquidity_pool::contract_obj);
     
     // Adicionar liquidez
