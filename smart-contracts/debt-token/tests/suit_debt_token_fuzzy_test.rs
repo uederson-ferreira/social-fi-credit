@@ -8,8 +8,6 @@
 
 use multiversx_sc_scenario::imports::ReturnCode;
 use multiversx_sc_scenario::num_bigint;
-//use multiversx_sc_scenario::imports::ManagedAsyncCallResult;
-//use multiversx_sc_scenario::managed_buffer;
 use num_bigint::BigUint;
 use num_traits::ToPrimitive;
 use multiversx_sc_scenario::managed_token_id;
@@ -98,7 +96,7 @@ where
 
 
     // Função para emitir token de dívida
-    pub fn issue_debt_token(&mut self) {
+    pub fn d_f_issue_debt_token(&mut self) {
         println!("Emitindo token de dívida");
         
         let result = self.blockchain_wrapper
@@ -148,7 +146,7 @@ where
 
     
     // Configurar explicitamente os saldos ESDT (tokens personalizados) para as contas, além do saldo EGLD (token nativo)
-    pub fn setup_token_balances(&mut self) {
+    pub fn d_f_setup_token_balances(&mut self) {
         // Assumindo que o token foi emitido e seu ID é conhecido
         let token_id = b"DEBT-123456"; // Token ID conforme configurado no setup
         
@@ -188,7 +186,7 @@ where
         println!("Saldos de token configurados para todas as contas");
     }
 
-    pub fn setup_token_roles(&mut self) {
+    pub fn d_f_setup_token_roles(&mut self) {
         let token_id = b"DEBT-123456"; // Mesmo token ID usado anteriormente
         
         // Configurar roles para o contrato
@@ -215,7 +213,7 @@ where
 
 
     // Criar NFT de dívida
-    pub fn create_debt_nft(
+    pub fn d_f_create_debt_nft(
         &mut self,
         loan_id: u64,
         borrower: &Address,
@@ -264,7 +262,7 @@ where
     }
 
     // Criar NFT com parâmetros aleatórios
-    pub fn create_random_debt_nft(&mut self) -> u64 {
+    pub fn d_f_create_random_debt_nft(&mut self) -> u64 {
         // Primeiro, colete todos os valores necessários
         let loan_id = fastrand::u64(1000..100000);
         let interest_rate = fastrand::u64(100..5000); // 1% a 50% (em pontos base)
@@ -282,7 +280,7 @@ where
         
         // Agora que temos todos os valores, podemos chamar create_debt_nft
         let amount = rust_biguint!(amount_value);
-        let result = self.create_debt_nft(
+        let result = self.d_f_create_debt_nft(
             loan_id, 
             &borrower_address,  // Passamos uma referência à cópia clonada
             &amount, 
@@ -297,7 +295,7 @@ where
     }
 
     // Queimar NFT de dívida
-    pub fn burn_debt_nft(&mut self, loan_id: u64) -> Result<(), ()> {
+    pub fn d_f_burn_debt_nft(&mut self, loan_id: u64) -> Result<(), ()> {
         println!("Queimando NFT para empréstimo #{}", loan_id);
         
         let result = self.blockchain_wrapper
@@ -320,7 +318,7 @@ where
     }
 
     // Verificar ID do NFT de um empréstimo
-    // pub fn verify_nft_created(&mut self, loan_id: u64) {
+    // pub fn d_f_verify_nft_created(&mut self, loan_id: u64) {
     //     // Execute a consulta sem tentar obter o resultado
     //     self.blockchain_wrapper
     //         .execute_query(&self.contract_wrapper, |sc| {
@@ -334,7 +332,7 @@ where
     // }
 
     // Mintar tokens
-    pub fn mint_tokens(&mut self, recipient: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
+    pub fn d_f_mint_tokens(&mut self, recipient: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
         println!("Mintando {:?} tokens para {:?}", amount, recipient);
         
         // Atualizar o saldo esperado
@@ -372,7 +370,7 @@ where
     }
 
     // Mintar quantidade aleatória de tokens para um usuário
-    pub fn mint_random_tokens(&mut self) -> (Address, num_bigint::BigUint) {
+    pub fn d_f_mint_random_tokens(&mut self) -> (Address, num_bigint::BigUint) {
         // Escolhe um usuário aleatório
         let user_idx = fastrand::usize(0..3);
         let recipient = match user_idx {
@@ -383,13 +381,13 @@ where
         
         let amount = rust_biguint!(fastrand::u64(1_000_000_000..100_000_000_000));
         
-        let _ = self.mint_tokens(&recipient, amount.clone());
+        let _ = self.d_f_mint_tokens(&recipient, amount.clone());
         
         (recipient, amount)
     }
 
     // Queimar tokens
-    pub fn burn_tokens(&mut self, from: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
+    pub fn d_f_burn_tokens(&mut self, from: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
         println!("Queimando {:?} tokens de {:?}", amount, from);
 
         // Converter o BigUint para u64 de forma segura
@@ -422,7 +420,7 @@ where
     }
 
     // Transferir tokens
-    pub fn transfer_tokens(&mut self, sender: &Address, recipient: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
+    pub fn d_f_transfer_tokens(&mut self, sender: &Address, recipient: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
         println!("Transferindo {:?} tokens de {:?} para {:?}", amount, sender, recipient);
         
         // Converter o BigUint para u64 de forma segura
@@ -454,7 +452,7 @@ where
     }
 
     // Aprovar tokens
-    pub fn approve_tokens(&mut self, owner: &Address, spender: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
+    pub fn d_f_approve_tokens(&mut self, owner: &Address, spender: &Address, amount: num_bigint::BigUint) -> Result<(), ()> {
         println!("Aprovando {} tokens para gasto por {:?}", amount, spender);
         
         // Converter o BigUint para u64 de forma segura
@@ -486,7 +484,7 @@ where
     }
 
     // Transferir tokens de outro endereço (usando allowance)
-    pub fn transfer_tokens_from(
+    pub fn d_f_transfer_tokens_from(
         &mut self,
         spender: &Address,
         owner: &Address,
@@ -525,7 +523,7 @@ where
     }
 
     // Verificar saldo de tokens
-    pub fn balance_of(&self, address: &Address) -> num_bigint::BigUint {
+    pub fn d_f_balance_of(&self, address: &Address) -> num_bigint::BigUint {
         // Retornar o saldo esperado do mapa, ou zero se não existir
         self.expected_balances.get(address)
             .cloned()
@@ -538,13 +536,13 @@ where
 // -----------------------------------------
 
 #[test]
-fn test_fuzzy_create_debt_nft() {
+fn d_f_fuzzy_create_debt_nft() {
     let mut setup = ContractSetup::new(debt_token::contract_obj);
     
     // Preparar
-    setup.issue_debt_token();
-    setup.setup_token_balances(); // Adicione esta linha
-    setup.setup_token_roles();
+    setup.d_f_issue_debt_token();
+    setup.d_f_setup_token_balances(); // Adicione esta linha
+    setup.d_f_setup_token_roles();
     
     println!("\n=== Iniciando teste fuzzy de criação de NFT de dívida ===");
     
@@ -553,7 +551,7 @@ fn test_fuzzy_create_debt_nft() {
     
     for i in 1..11 {
         println!("Iteração #{}", i);
-        let loan_id = setup.create_random_debt_nft();
+        let loan_id = setup.d_f_create_random_debt_nft();
         
         if loan_id > 0 {
             loan_ids.push(loan_id);
@@ -580,7 +578,7 @@ fn test_fuzzy_create_debt_nft() {
                 let user1_address = setup.user1_address.clone();
                 let base_timestamp = setup.base_timestamp;
                 
-                let result = setup.create_debt_nft(
+                let result = setup.d_f_create_debt_nft(
                     loan_id,
                     &user1_address, // Usar o valor clonado
                     &amount_value,
@@ -597,13 +595,13 @@ fn test_fuzzy_create_debt_nft() {
 }
 
 #[test]
-fn test_fuzzy_nft_create_with_invalid_params() {
+fn d_f_fuzzy_nft_create_with_invalid_params() {
     let mut setup = ContractSetup::new(debt_token::contract_obj);
     
     // Preparar
-    setup.issue_debt_token();
-    setup.setup_token_balances(); // Adicione esta linha
-    setup.setup_token_roles();
+    setup.d_f_issue_debt_token();
+    setup.d_f_setup_token_balances(); // Adicione esta linha
+    setup.d_f_setup_token_roles();
     
     println!("\n=== Iniciando teste fuzzy de parâmetros inválidos ===");
     
@@ -617,7 +615,7 @@ fn test_fuzzy_nft_create_with_invalid_params() {
         let user_address = setup.user1_address.clone();
         let due_timestamp = setup.base_timestamp + fastrand::u64(86400..31536000);
         
-        let result = setup.create_debt_nft(
+        let result = setup.d_f_create_debt_nft(
             loan_id,
             &user_address,  // Use o endereço clonado
             &zero_amount,   // Passe uma referência ao valor
@@ -637,7 +635,7 @@ fn test_fuzzy_nft_create_with_invalid_params() {
         // Clone o endereço do usuário para evitar referências a setup
         let user_address = setup.user1_address.clone();
 
-        let result = setup.create_debt_nft(
+        let result = setup.d_f_create_debt_nft(
             loan_id,
             &user_address,
             &amount,
@@ -693,13 +691,13 @@ fn test_fuzzy_nft_create_with_invalid_params() {
 
 
 #[test]
-fn test_fuzzy_nft_burn() {
+fn d_f_fuzzy_nft_burn() {
     let mut setup = ContractSetup::new(debt_token::contract_obj);
     
     // Preparar
-    setup.issue_debt_token();
-    setup.setup_token_balances(); // Função adicional para configurar saldos
-    setup.setup_token_roles();    // Função adicional para configurar roles
+    setup.d_f_issue_debt_token();
+    setup.d_f_setup_token_balances(); // Função adicional para configurar saldos
+    setup.d_f_setup_token_roles();    // Função adicional para configurar roles
     
     println!("\n=== Iniciando teste fuzzy de queima de NFT ===");
     
@@ -717,7 +715,7 @@ fn test_fuzzy_nft_burn() {
         let due_timestamp = setup.base_timestamp + fastrand::u64(86400..31536000);
         
         // Agora podemos usar setup de forma mutável
-        let result = setup.create_debt_nft(
+        let result = setup.d_f_create_debt_nft(
             loan_id,
             &user_address, // Use a variável clonada
             &amount,
@@ -757,7 +755,7 @@ fn test_fuzzy_nft_burn() {
             &[],
         );
         
-        let result = setup.burn_debt_nft(*loan_id);
+        let result = setup.d_f_burn_debt_nft(*loan_id);
         
         assert!(result.is_ok(), "A queima do NFT #{} falhou", loan_id);
         
@@ -784,7 +782,7 @@ let mut additional_nft_data = Vec::new();
 //     let due_timestamp = setup.base_timestamp + fastrand::u64(86400..31536000);
     
 //     // Agora podemos usar setup de forma mutável
-//     let result = setup.create_debt_nft(
+//     let result = setup.d_f_ create_debt_nft(
 //         loan_id,
 //         &user_address, // Use a variável clonada
 //         &amount,
@@ -822,7 +820,7 @@ let mut additional_nft_data = Vec::new();
             &[],
         );
         
-        let result = setup.burn_debt_nft(*loan_id);
+        let result = setup.d_f_burn_debt_nft(*loan_id);
         assert!(result.is_ok(), "A queima do NFT #{} falhou", loan_id);
         
         // Verificar se o NFT foi queimado
@@ -834,13 +832,13 @@ let mut additional_nft_data = Vec::new();
             .assert_ok();
         
         // Tentar queimar o mesmo NFT novamente (deve falhar)
-        let result = setup.burn_debt_nft(*loan_id);
+        let result = setup.d_f_burn_debt_nft(*loan_id);
         assert!(result.is_err(), "Queima repetida do NFT #{} deveria falhar", loan_id);
     }
     
     // Tentar queimar NFT inexistente
     let non_existent_id = 9999999u64;
-    let result = setup.burn_debt_nft(non_existent_id);
+    let result = setup.d_f_burn_debt_nft(non_existent_id);
     assert!(result.is_err(), "Queima de NFT inexistente deveria falhar");
     
     // Tentar queimar como usuário não autorizado
@@ -855,7 +853,7 @@ let mut additional_nft_data = Vec::new();
 //     let due_timestamp = setup.base_timestamp + fastrand::u64(86400..31536000);
     
 //     // Agora podemos usar setup de forma mutável
-//     let result = setup.create_debt_nft(
+//     let result = setup.d_f_ create_debt_nft(
 //         new_loan_id,
 //         &user_address, // Use a variável clonada
 //         &amount,
@@ -883,7 +881,7 @@ let mut additional_nft_data = Vec::new();
 //                 &setup.contract_wrapper,
 //                 &rust_biguint!(0),
 //                 |sc| {
-//                     sc.burn_debt_nft(new_loan_id);
+//                     sc.d_f_burn_debt_nft(new_loan_id);
 //                 },
 //             );
             
@@ -898,13 +896,13 @@ let mut additional_nft_data = Vec::new();
 
 
 #[test]
-fn test_fuzzy_token_operations() {
+fn d_f_fuzzy_token_operations() {
     let mut setup = ContractSetup::new(debt_token::contract_obj);
     
     // Preparar
-    setup.issue_debt_token();
-    setup.setup_token_balances(); // Adicione esta linha
-    setup.setup_token_roles();
+    setup.d_f_issue_debt_token();
+    setup.d_f_setup_token_balances();
+    setup.d_f_setup_token_roles();
     
     println!("\n=== Iniciando teste fuzzy de operações com tokens ===");
     
@@ -916,7 +914,7 @@ fn test_fuzzy_token_operations() {
     
     // 1. Mintar tokens aleatórios para usuários
     for _ in 0..5 {
-        let (recipient, amount) = setup.mint_random_tokens();
+        let (recipient, amount) = setup.d_f_mint_random_tokens();
         
         // Atualizar saldo esperado
         if let Some(balance) = balances.get_mut(&recipient) {
@@ -924,7 +922,7 @@ fn test_fuzzy_token_operations() {
         }
         
         // Verificar saldo
-        let actual_balance = setup.balance_of(&recipient);
+        let actual_balance = setup.d_f_balance_of(&recipient);
         assert_eq!(actual_balance, balances[&recipient], "Saldo após mint não corresponde ao esperado");
     }
     
@@ -961,7 +959,7 @@ fn test_fuzzy_token_operations() {
         let amount: BigUint = max_amount.clone() * percent as u64 / rust_biguint!(100);
         
         // Transferir tokens
-        let result = setup.transfer_tokens(&from, &to, amount.clone());
+        let result = setup.d_f_transfer_tokens(&from, &to, amount.clone());
         
         if result.is_ok() {
             // Atualizar saldos esperados
@@ -974,8 +972,8 @@ fn test_fuzzy_token_operations() {
             }
             
             // Verificar saldos
-            let actual_from_balance = setup.balance_of(&from);
-            let actual_to_balance = setup.balance_of(&to);
+            let actual_from_balance = setup.d_f_balance_of(&from);
+            let actual_to_balance = setup.d_f_balance_of(&to);
             
             assert_eq!(actual_from_balance, balances[&from], "Saldo do remetente não corresponde após transferência");
             assert_eq!(actual_to_balance, balances[&to], "Saldo do destinatário não corresponde após transferência");
@@ -1014,7 +1012,7 @@ fn test_fuzzy_token_operations() {
         let approve_amount: BigUint = owner_balance.clone() * approve_percent as u64 / rust_biguint!(100);
         
         // Aprovar tokens
-        let _ = setup.approve_tokens(&owner, &spender, approve_amount.clone());
+        let _ = setup.d_f_approve_tokens(&owner, &spender, approve_amount.clone());
         
         // Escolher valor para transferência (potencialmente maior que o aprovado para testar falha)
         let transfer_percent = fastrand::u8(1..150); // Pode ser mais de 100% para testar falhas
@@ -1029,7 +1027,7 @@ fn test_fuzzy_token_operations() {
         };
         
         // Transferir tokens usando allowance
-        let result = setup.transfer_tokens_from(&spender, &owner, &to, transfer_amount.clone());
+        let result = setup.d_f_transfer_tokens_from(&spender, &owner, &to, transfer_amount.clone());
         
         // Se a transferência foi bem-sucedida, atualizar os saldos esperados
         if result.is_ok() {
@@ -1042,8 +1040,8 @@ fn test_fuzzy_token_operations() {
             }
             
             // Verificar saldos
-            let actual_owner_balance = setup.balance_of(&owner);
-            let actual_to_balance = setup.balance_of(&to);
+            let actual_owner_balance = setup.d_f_balance_of(&owner);
+            let actual_to_balance = setup.d_f_balance_of(&to);
             
             assert_eq!(actual_owner_balance, balances[&owner], "Saldo do proprietário não corresponde após transferência com allowance");
             assert_eq!(actual_to_balance, balances[&to], "Saldo do destinatário não corresponde após transferência com allowance");
@@ -1070,7 +1068,7 @@ fn test_fuzzy_token_operations() {
         let burn_amount: BigUint = user_balance.clone() * burn_percent as u64 / rust_biguint!(100);
         
         // Queimar tokens
-        let result = setup.burn_tokens(&user, burn_amount.clone());
+        let result = setup.d_f_burn_tokens(&user, burn_amount.clone());
         
         if result.is_ok() {
             // Atualizar saldo esperado
@@ -1079,7 +1077,7 @@ fn test_fuzzy_token_operations() {
             }
             
             // Verificar saldo
-            let actual_balance = setup.balance_of(&user);
+            let actual_balance = setup.d_f_balance_of(&user);
             assert_eq!(actual_balance, balances[&user], "Saldo após queima não corresponde ao esperado");
         }
     }
@@ -1088,13 +1086,13 @@ fn test_fuzzy_token_operations() {
 }
 
 #[test]
-fn test_fuzzy_stress_test() {
+fn d_f_fuzzy_stress_test() {
     let mut setup = ContractSetup::new(debt_token::contract_obj);
     
     // Preparar
-    setup.issue_debt_token();
-    setup.setup_token_balances(); // Adicione esta linha
-    setup.setup_token_roles();
+    setup.d_f_issue_debt_token();
+    setup.d_f_setup_token_balances(); // Adicione esta linha
+    setup.d_f_setup_token_roles();
     
     println!("\n=== Iniciando teste de stress ===");
     
@@ -1104,7 +1102,7 @@ fn test_fuzzy_stress_test() {
     // 1. Criar múltiplos NFTs
     println!("Criando NFTs...");
     for _ in 0..20 {
-        let loan_id = setup.create_random_debt_nft();
+        let loan_id = setup.d_f_create_random_debt_nft();
         if loan_id > 0 {
             loan_ids.push(loan_id);
         }
@@ -1121,7 +1119,7 @@ fn test_fuzzy_stress_test() {
     ];
     
     for user in users.iter() {
-        let _ = setup.mint_tokens(user, mint_amount.clone());
+        let _ = setup.d_f_mint_tokens(user, mint_amount.clone());
     }
     
     // 3. Executar operações aleatórias em loop
@@ -1135,7 +1133,7 @@ fn test_fuzzy_stress_test() {
         match operation {
             // Criar novo NFT
             0 => {
-                let loan_id = setup.create_random_debt_nft();
+                let loan_id = setup.d_f_create_random_debt_nft();
                 if loan_id > 0 {
                     loan_ids.push(loan_id);
                 }
@@ -1147,7 +1145,7 @@ fn test_fuzzy_stress_test() {
                     let idx = fastrand::usize(0..loan_ids.len());
                     let loan_id = loan_ids[idx];
                     
-                    if setup.burn_debt_nft(loan_id).is_ok() {
+                    if setup.d_f_burn_debt_nft(loan_id).is_ok() {
                         // Remover o ID da lista
                         loan_ids.remove(idx);
                     }
@@ -1163,10 +1161,10 @@ fn test_fuzzy_stress_test() {
                     let from = &users[from_idx];
                     let to = &users[to_idx];
                     
-                    let balance = setup.balance_of(from);
+                    let balance = setup.d_f_balance_of(from);
                     if balance > rust_biguint!(0u64) {
                         let transfer_amount = balance / 5u64; // 20% do saldo
-                        let _ = setup.transfer_tokens(from, to, transfer_amount);
+                        let _ = setup.d_f_transfer_tokens(from, to, transfer_amount);
                     }
                 }
             },
@@ -1180,10 +1178,10 @@ fn test_fuzzy_stress_test() {
                     let owner = &users[owner_idx];
                     let spender = &users[spender_idx];
                     
-                    let balance = setup.balance_of(owner);
+                    let balance = setup.d_f_balance_of(owner);
                     if balance > rust_biguint!(0u64) {
                         let approve_amount = balance / 2u64; // 50% do saldo
-                        let _ = setup.approve_tokens(owner, spender, approve_amount);
+                        let _ = setup.d_f_approve_tokens(owner, spender, approve_amount);
                     }
                 }
             },
@@ -1199,10 +1197,10 @@ fn test_fuzzy_stress_test() {
                     let spender = &users[spender_idx];
                     let to = &users[to_idx];
                     
-                    let balance = setup.balance_of(owner);
+                    let balance = setup.d_f_balance_of(owner);
                     if balance > rust_biguint!(0u64) {
                         let transfer_amount = balance / 4u64; // 25% do saldo
-                        let _ = setup.transfer_tokens_from(spender, owner, to, transfer_amount);
+                        let _ = setup.d_f_transfer_tokens_from(spender, owner, to, transfer_amount);
                     }
                 }
             },

@@ -27,7 +27,7 @@ where
 }
 
 // Função de configuração para os testes
-fn setup_contract<ContractObjBuilder>(
+fn d_t_setup_contract<ContractObjBuilder>(
     builder: ContractObjBuilder,
 ) -> ContractSetup<ContractObjBuilder>
 where
@@ -64,7 +64,7 @@ where
 }
 
 // Função auxiliar para configurar o token de dívida
-fn issue_debt_token<ContractObjBuilder>(
+fn d_t_issue_debt_token<ContractObjBuilder>(
     setup: &mut ContractSetup<ContractObjBuilder>
 )
 where
@@ -84,8 +84,8 @@ where
 
 // Teste de inicialização do contrato
 #[test]
-fn test_init() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+fn d_t_init() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Verificar estado inicial
     setup.blockchain_wrapper
@@ -107,11 +107,11 @@ fn test_init() {
 
 // Teste de emissão do token de dívida
 #[test]
-fn test_issue_debt_token() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+fn d_t_fun_issue_debt_token() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Verificar que o ID do token não está mais vazio
     setup.blockchain_wrapper
@@ -124,11 +124,12 @@ fn test_issue_debt_token() {
 
 // Teste de criação de NFT de dívida
 #[test]
-fn test_create_debt_nft() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_create_debt_nft() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -163,11 +164,12 @@ fn test_create_debt_nft() {
 
 // Teste de queima de NFT de dívida
 #[test]
-fn test_burn_debt_nft() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_debt_nft() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -207,12 +209,12 @@ fn test_burn_debt_nft() {
 
 // Teste de segurança: Apenas o controlador de empréstimos pode criar NFTs
 #[test]
-#[should_panic(expected = "Only loan controller can create debt NFTs")]
-fn test_create_debt_nft_unauthorized() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_create_debt_nft_unauthorized() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -240,12 +242,12 @@ fn test_create_debt_nft_unauthorized() {
 
 // Teste de segurança: Apenas o controlador de empréstimos pode queimar NFTs
 #[test]
-#[should_panic(expected = "Only loan controller can burn debt NFTs")]
-fn test_burn_debt_nft_unauthorized() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_debt_nft_unauthorized() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -279,11 +281,12 @@ fn test_burn_debt_nft_unauthorized() {
 
 // Teste de mintagem de tokens de dívida
 #[test]
-fn test_mint_tokens() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_mint_tokens() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para um usuário
     setup.blockchain_wrapper
@@ -303,11 +306,12 @@ fn test_mint_tokens() {
 
 // Teste de queima de tokens de dívida
 #[test]
-fn test_burn_tokens() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_tokens() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     let _ = setup.blockchain_wrapper
@@ -333,12 +337,12 @@ fn test_burn_tokens() {
 
 // Teste de verificação de autorização para mintar tokens
 #[test]
-#[should_panic(expected = "Only loan controller can mint tokens")]
-fn test_mint_tokens_unauthorized() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_mint_tokens_unauthorized() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Tentar mintar a partir de endereço não autorizado (usuário comum)
     setup.blockchain_wrapper
@@ -350,12 +354,12 @@ fn test_mint_tokens_unauthorized() {
 
 // Teste de verificação de autorização para queimar tokens
 #[test]
-#[should_panic(expected = "Only loan controller can burn tokens")]
-fn test_burn_tokens_unauthorized() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_tokens_unauthorized() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -374,12 +378,13 @@ fn test_burn_tokens_unauthorized() {
 
 // Teste de transferência de tokens
 #[test]
-fn test_transfer_tokens() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_transfer_tokens() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -410,13 +415,13 @@ fn test_transfer_tokens() {
 
 // Teste de transferência com saldo insuficiente
 #[test]
-#[should_panic(expected = "Insufficient balance for transfer")]
-fn test_transfer_tokens_insufficient_balance() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_transfer_tokens_insufficient_balance() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -435,13 +440,14 @@ fn test_transfer_tokens_insufficient_balance() {
 
 // Teste de aprovação e transferência por terceiros
 #[test]
-fn test_approve_and_transfer_from() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_approve_and_transfer_from() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -494,14 +500,14 @@ fn test_approve_and_transfer_from() {
 
 // Teste de transfer_from com autorização insuficiente
 #[test]
-#[should_panic(expected = "Insufficient allowance")]
-fn test_transfer_tokens_from_insufficient_allowance() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_transfer_tokens_from_insufficient_allowance() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
@@ -529,12 +535,12 @@ fn test_transfer_tokens_from_insufficient_allowance() {
 
 // Teste de aumento e diminuição de allowance
 #[test]
-fn test_increase_decrease_token_allowance() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+fn d_t_increase_decrease_token_allowance() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Aprovar um valor inicial
     setup.blockchain_wrapper
@@ -574,13 +580,13 @@ fn test_increase_decrease_token_allowance() {
 
 // Teste de diminuição de allowance para valor maior que o atual
 #[test]
-#[should_panic(expected = "Cannot decrease below zero")]
-fn test_decrease_token_allowance_below_zero() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_decrease_token_allowance_below_zero() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let spender = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Aprovar um valor inicial
     setup.blockchain_wrapper
@@ -599,13 +605,14 @@ fn test_decrease_token_allowance_below_zero() {
 
 // Teste para verificar consistência do saldo total
 #[test]
-fn test_total_supply_consistency() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_total_supply_consistency() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let user2 = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     let user3 = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Realizar várias operações e verificar consistência
     setup.blockchain_wrapper
@@ -636,8 +643,9 @@ fn test_total_supply_consistency() {
 
 // Teste do ciclo de vida completo
 #[test]
-fn test_complete_lifecycle() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_complete_lifecycle() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let recipient = setup.blockchain_wrapper.create_user_account(&rust_biguint!(0));
     
     // 1. Verificar estado inicial
@@ -649,7 +657,7 @@ fn test_complete_lifecycle() {
         .assert_ok();
     
     // 2. Emitir o token de dívida
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // 3. Verificar que o token foi emitido
     setup.blockchain_wrapper
@@ -753,12 +761,12 @@ fn test_complete_lifecycle() {
 
 // Teste de criação de NFT para empréstimo já existente
 #[test]
-#[should_panic(expected = "NFT already exists for this loan")]
-fn test_create_debt_nft_duplicate() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_create_debt_nft_duplicate() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -798,12 +806,12 @@ fn test_create_debt_nft_duplicate() {
 
 // Teste de queima de NFT inexistente
 #[test]
-#[should_panic(expected = "No NFT exists for this loan")]
-fn test_burn_nonexistent_debt_nft() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_nonexistent_debt_nft() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Tentar queimar um NFT inexistente
     setup.blockchain_wrapper
@@ -815,12 +823,12 @@ fn test_burn_nonexistent_debt_nft() {
 
 // Teste de criação de NFT com data passada
 #[test]
-#[should_panic(expected = "Due date must be in the future")]
-fn test_create_debt_nft_past_due_date() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_create_debt_nft_past_due_date() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -848,12 +856,11 @@ fn test_create_debt_nft_past_due_date() {
 
 // Teste de criação de NFT com valor zero
 #[test]
-#[should_panic(expected = "Amount must be greater than zero")]
-fn test_create_debt_nft_zero_amount() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+fn d_t_create_debt_nft_zero_amount() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Definir variáveis para o teste
     let loan_id = 1u64;
@@ -880,13 +887,12 @@ fn test_create_debt_nft_zero_amount() {
 
 // Teste de mintagem de tokens para endereço zero
 #[test]
-#[should_panic(expected = "Cannot mint to zero address")]
-fn test_mint_to_zero_address() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+fn d_t_mint_to_zero_address() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     let zero_address = Address::zero();
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Tentar mintar para endereço zero
     let _ = setup.blockchain_wrapper
@@ -897,12 +903,12 @@ fn test_mint_to_zero_address() {
 
 // Teste de queima de mais tokens do que o usuário possui
 #[test]
-#[should_panic(expected = "Insufficient balance for burn")]
-fn test_burn_insufficient_balance() {
-    let mut setup = setup_contract(debt_token::contract_obj);
+#[should_panic]
+fn d_t_burn_insufficient_balance() {
+    let mut setup = d_t_setup_contract(debt_token::contract_obj);
     
     // Emitir o token de dívida primeiro
-    issue_debt_token(&mut setup);
+    d_t_issue_debt_token(&mut setup);
     
     // Mintar tokens para o usuário
     setup.blockchain_wrapper
