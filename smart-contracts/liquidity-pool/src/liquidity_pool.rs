@@ -57,6 +57,9 @@ pub trait LiquidityPool {
         self.max_utilization_rate().set(2000u64);    // Taxa adicional para alta utilização
         self.reserve_percent().set(2000u64);         // 20% (base 10000)
         
+        // No método init, adicione:
+        self.total_tokens().set(BigUint::zero());
+
         // Inicializa como não pausado
         self.paused().set(false);
     }
@@ -131,6 +134,12 @@ pub trait LiquidityPool {
         
         // Emite evento para auditoria
         self.funds_deposited_event(&caller, &amount);
+
+        // Atualiza o total de tokens
+        // Adiciona o valor depositado ao total de tokens
+        // Isso é necessário para manter o controle correto dos tokens no pool
+        self.total_tokens().update(|v| *v += amount.clone());
+
     }
     
     // Retira fundos do pool de liquidez
@@ -138,7 +147,7 @@ pub trait LiquidityPool {
     #[endpoint(withdrawFunds)]
     fn withdraw_funds(&self, amount: BigUint) {
         self.require_not_paused();
-        
+
         let caller = self.blockchain().get_caller();
         
         require!(
@@ -192,6 +201,12 @@ pub trait LiquidityPool {
         
         // Emite evento para auditoria
         self.funds_withdrawn_event(&caller, &amount);
+
+        // Atualiza o total de tokens
+        // Adiciona o valor retirado ao total de tokens
+        // Isso é necessário para manter o controle correto dos tokens no pool
+        self.total_tokens().update(|v| *v -= &amount);
+
     }
     
     // Versão alternativa para retirada (compatível com os testes)
@@ -221,6 +236,15 @@ pub trait LiquidityPool {
         
         // Envia os tokens com todos os parâmetros requeridos
         self.send().direct(&caller, &esdt_token, 0, &amount);
+
+        // Emite evento para auditoria
+        self.funds_withdrawn_event(&caller, &amount);
+
+        // Atualiza o total de tokens
+        // Adiciona o valor retirado ao total de tokens
+        // Isso é necessário para manter o controle correto dos tokens no pool
+        self.total_tokens().update(|v| *v -= &amount);
+
     }
     
     // Processa rendimento pendente para um provedor
@@ -655,6 +679,19 @@ pub trait LiquidityPool {
     fn is_paused(&self) -> bool {
         self.paused().get()
     }
+        // Adicione o método para obter o preço do token
+        #[view]
+        fn get_token_price(&self) -> BigUint {
+            // Implementação do cálculo de preço
+            let total_tokens = self.total_tokens().get();
+            let total_liquidity = self.total_liquidity().get();
+            
+            if total_tokens == 0 {
+                return BigUint::zero();
+            }
+            
+            total_liquidity / total_tokens
+        }
     
     #[view(getBorrowerDebt)]
     fn get_borrower_debt(&self, borrower: ManagedAddress) -> BigUint {
@@ -820,6 +857,10 @@ pub trait LiquidityPool {
     // ID do token usado para reservas
     #[storage_mapper("reserve_token_id")]
     fn reserve_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
+
+    // Adicione este mapeamento de armazenamento junto com os outros storage_mappers
+    #[storage_mapper("total_tokens")]
+    fn total_tokens(&self) -> SingleValueMapper<BigUint>;
 }
 
 // Estrutura para armazenar informações dos fundos do provedor

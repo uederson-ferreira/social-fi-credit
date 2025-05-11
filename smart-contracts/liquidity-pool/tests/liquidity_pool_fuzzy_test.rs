@@ -3,18 +3,12 @@
 // Descrição: Testes fuzzy com entradas aleatórias para o contrato LiquidityPool
 // ==========================================================================
 
-//use multiversx_sc::types::BigUint;
 use multiversx_sc::contract_base::ContractBase;
 use multiversx_sc::proxy_imports::TokenIdentifier;
 use num_traits::cast::ToPrimitive;
-//use multiversx_sc_scenario::api::StaticApi;
-//use core::marker::PhantomData;
 use multiversx_sc::types::Address;
-//use multiversx_sc::api::ManagedTypeApi;
-// Import DebugApi instead of StaticApi
 use multiversx_sc_scenario::DebugApi;
 use multiversx_sc_scenario::*;
-//use multiversx_sc::types::BigUint;
 use multiversx_sc_scenario::{
     managed_address, managed_biguint, rust_biguint,
     testing_framework::{BlockchainStateWrapper, ContractObjWrapper},
@@ -121,13 +115,6 @@ where
     // Reutilizamos a função de configuração fuzzy com um número mínimo de provedores e tomadores
     setup_fuzzy_contract(builder, 1, 1)
 }
-
-// // Função para gerar um endereço aleatório
-// fn generate_random_address(rng: &mut StdRng) -> Address {
-//     let mut address_bytes = [0u8; 32];
-//     rng.fill(&mut address_bytes);
-//     Address::from_slice(&address_bytes)
-// }
 
 // Teste fuzzy para múltiplos depósitos e retiradas
 #[test]
