@@ -12,14 +12,12 @@ path = "src/debt_token.rs"
 common-types = { path = "../common-types" }
 multiversx-sc = "0.57.1"
 getrandom = { version = "0.2.10", features = ["js"] }
+
+
+[dev-dependencies]
+multiversx-sc-scenario = "0.57.1"
 fastrand = "2.3.0"
 rand = "0.8"
 num-bigint = { version = "0.4", features = ["rand"] }
 num-traits = "0.2"
-#elrond-wasm = "0.38.0"  # Ajuste para a versão que você está usando
-
-[dev-dependencies]
-multiversx-sc-scenario = "0.57.1"
-#elrond-wasm-debug = "0.38.0"  # Para testes
-
 

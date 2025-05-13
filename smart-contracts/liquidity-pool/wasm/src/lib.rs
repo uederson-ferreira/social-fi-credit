@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           29
+// Endpoints:                           30
 // Async Callback (empty):               1
-// Total number of exported functions:  31
+// Total number of exported functions:  32
 
 #![no_std]
 
@@ -43,6 +43,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setDebtTokenAddress => set_debt_token_address
         setLpTokenAddress => set_lp_token_address
         is_paused => is_paused
+        get_token_price => get_token_price
         getBorrowerDebt => get_borrower_debt
         getAnnualYieldPercentage => get_annual_yield_percentage
         getTotalLiquidity => get_total_liquidity

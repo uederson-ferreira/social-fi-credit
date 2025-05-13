@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           21
+// Endpoints:                           22
 // Async Callback:                       1
-// Total number of exported functions:  23
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -21,6 +21,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         issueDebtToken => issue_debt_token
         createDebtNft => create_debt_nft
         burnDebtNft => burn_debt_nft
+        get_loan_nft_id_for_test => get_loan_nft_id_for_test
         getCurrentFunds => get_current_funds
         status => status
         getTarget => target

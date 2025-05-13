@@ -95,6 +95,21 @@
             "outputs": []
         },
         {
+            "name": "get_loan_nft_id_for_test",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "loan_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
             "name": "getCurrentFunds",
             "mutability": "readonly",
             "inputs": [],

@@ -616,8 +616,6 @@ fn l_s_flash_loan_attack() {
     }).assert_ok();
 }
 
-
-// Teste contra manipulação da taxa de utilização
 // Teste contra manipulação da taxa de utilização
 #[test]
 fn l_s_utilization_rate_manipulation() {
@@ -656,41 +654,6 @@ fn l_s_utilization_rate_manipulation() {
     ).assert_ok();
 }
 
-// #[test]
-// fn l_s_utilization_rate_manipulation() {
-//     let mut setup = setup_contract(liquidity_pool::contract_obj);
-    
-//     // Primeiro, criar uma cópia do endereço
-//     let provider_addr = setup.provider_address.clone();
-    
-//     // Adicionar liquidez inicial usando ESDT em vez de EGLD
-//     add_esdt_to_contract(&mut setup, &provider_addr, TOKEN_ID_BYTES, 10000);
-    
-//     // Verificar que a taxa de utilização não pode ser manipulada diretamente
-//     setup.blockchain_wrapper
-//         .execute_tx(&setup.attacker_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-//             // Verificar taxa de utilização atual (deve ser 0)
-//             assert_eq!(sc.utilization_rate().get(), 0u64);
-            
-//             // Na implementação real, a taxa de utilização seria protegida e só alterada 
-//             // através de empréstimos e pagamentos legítimos
-            
-//             // Um atacante não poderia manipular diretamente a taxa para obter melhor taxa de juros
-//         })
-//         .assert_ok();
-    
-//     // Fazer um empréstimo legítimo
-//     setup.blockchain_wrapper
-//         .execute_tx(&setup.loan_controller_address, &setup.contract_wrapper, &rust_biguint!(0), |sc| {
-//             sc.borrow_endpoint();
-            
-//             // Verificar que a taxa de utilização foi atualizada corretamente
-//             assert_eq!(sc.utilization_rate().get(), 5000u64); // 50%
-//         })
-//         .assert_ok();
-// }
-
-// Teste contra ataque de bloqueio de liquidez
 // Teste contra ataque de bloqueio de liquidez
 #[test]
 fn l_s_liquidity_lockup_attack() {
@@ -854,7 +817,7 @@ fn l_s_reserve_manipulation() {
         &setup.attacker_address,
         &setup.contract_wrapper,
         &rust_biguint!(0),
-        |sc| {
+        |_sc| {
             // Verificar que um atacante não pode manipular diretamente as reservas
             //let current_reserves = sc.total_reserves().get();
             

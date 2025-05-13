@@ -338,90 +338,269 @@ pub trait LiquidityPool {
     
     // Endpoint borrow para empréstimos
     #[endpoint(borrow)]
-    fn borrow_endpoint(&self) {
+    fn borrow_endpoint(
+        &self,
+        borrower: ManagedAddress,
+        amount: BigUint,
+        token_id: TokenIdentifier
+    ) -> EsdtTokenPayment<Self::Api> {
         self.require_not_paused();
         
+        // Apenas o controlador de empréstimos pode chamar esta função
         let caller = self.blockchain().get_caller();
-        
         require!(
             caller == self.loan_controller_address().get(),
             "Apenas o controlador de empréstimos pode chamar esta função"
         );
         
-        // No teste, está simulando um empréstimo de 5000
-        // Em uma implementação completa, seria baseado em parâmetros
-        let borrow_amount = BigUint::from(5000u32);
-        let borrower = self.blockchain().get_caller(); // Ou poderíamos receber como parâmetro
+        // Validar entrada
+        require!(amount > BigUint::zero(), "Valor do empréstimo deve ser maior que zero");
+        require!(!borrower.is_zero(), "Endereço do tomador inválido");
         
+        // Verificar liquidez suficiente
+        let total_liquidity = self.total_liquidity().get();
         require!(
-            self.total_liquidity().get() >= borrow_amount,
+            total_liquidity >= amount,
             "Liquidez insuficiente no pool"
         );
         
-        // Atualiza o total de empréstimos
-        self.total_borrows().update(|v| *v += &borrow_amount);
-        
-        // Registra a dívida do tomador
-        self.borrower_debt(&borrower).update(|v| *v += &borrow_amount);
-        
-        // Atualiza a taxa de utilização
-        self.update_utilization_rate();
-        
-        // Implementação completa para enviar tokens ao tomador
-        // Recupera o token ID para envio
+        // Verificar que há pelo menos um provedor
         let provider_count = self.providers().len();
         require!(provider_count > 0, "Não há provedores de liquidez");
         
-        // Usamos o token do primeiro provedor como token de reserva
-        let first_provider = self.providers().get(0);
-        let token_id = self.provider_funds(first_provider).get().token_id;
+        // Verificar que o token solicitado está disponível
+        let mut token_available = false;
+        let mut token_provider = ManagedAddress::zero();
         
-        // Convertemos o TokenIdentifier para EgldOrEsdtTokenIdentifier
-        let esdt_token = EgldOrEsdtTokenIdentifier::esdt(token_id);
+        // Verificar cada provedor de forma segura
+        for i in 0..provider_count {
+            // Proteção adicional contra mudanças no comprimento do array durante a iteração
+            if i >= self.providers().len() {
+                break;
+            }
+            
+            let provider = self.providers().get(i);
+            
+            // Verificar se provider_funds existe para este provedor
+            if !self.provider_funds(provider.clone()).is_empty() {
+                let provider_funds = self.provider_funds(provider.clone()).get();
+                
+                if provider_funds.token_id == token_id && provider_funds.amount >= amount {
+                    token_available = true;
+                    token_provider = provider;
+                    break;
+                }
+            }
+        }
         
-        // Envia os tokens para o tomador de empréstimo
-        self.send().direct(&borrower, &esdt_token, 0, &borrow_amount);
+        require!(token_available, "Token solicitado não disponível em quantidade suficiente");
+        
+        // Atualizar estado do pool
+        self.total_borrows().update(|v| *v += &amount);
+        self.borrower_debt(&borrower).update(|v| *v += &amount);
+        
+        // Reduzir a disponibilidade do token no provedor
+        let mut provider_funds = self.provider_funds(token_provider.clone()).get();
+        provider_funds.amount -= &amount;
+        self.provider_funds(token_provider).set(provider_funds);
+        
+        // Atualizar taxa de utilização
+        self.update_utilization_rate();
+        
+        // Converter token para formato apropriado e transferir para o tomador
+        let esdt_token = EgldOrEsdtTokenIdentifier::esdt(token_id.clone());
+        self.send().direct(&borrower, &esdt_token, 0, &amount);
+        
+        // Emitir evento para auditoria
+        self.loan_created_event(
+            &caller,              // controlador de empréstimos
+            &borrower,            // tomador
+            &token_id,            // token
+            &amount               // valor
+        );
+        
+        // Retornar informações do pagamento
+        EsdtTokenPayment::new(token_id, 0, amount)
     }
 
+    // #[endpoint(borrow)]
+    // fn borrow_endpoint(
+    //     &self,
+    //     borrower: ManagedAddress,
+    //     amount: BigUint,
+    //     token_id: TokenIdentifier
+    // ) -> EsdtTokenPayment<Self::Api> {
+    //     self.require_not_paused();
+        
+    //     // Apenas o controlador de empréstimos pode chamar esta função
+    //     let caller = self.blockchain().get_caller();
+    //     require!(
+    //         caller == self.loan_controller_address().get(),
+    //         "Apenas o controlador de empréstimos pode chamar esta função"
+    //     );
+        
+    //     // Validar entrada
+    //     require!(amount > BigUint::zero(), "Valor do empréstimo deve ser maior que zero");
+    //     require!(!borrower.is_zero(), "Endereço do tomador inválido");
+        
+    //     // Verificar liquidez suficiente
+    //     let total_liquidity = self.total_liquidity().get();
+    //     require!(
+    //         total_liquidity >= amount,
+    //         "Liquidez insuficiente no pool"
+    //     );
+        
+    //     // Verificar que há pelo menos um provedor
+    //     let provider_count = self.providers().len();
+    //     require!(provider_count > 0, "Não há provedores de liquidez");
+        
+    //     // Verificar que o token solicitado está disponível
+    //     let mut token_available = false;
+    //     let mut token_provider = ManagedAddress::zero();
+        
+    //     for i in 0..provider_count {
+    //         let provider = self.providers().get(i);
+    //         let provider_funds = self.provider_funds(provider.clone()).get();
+            
+    //         if provider_funds.token_id == token_id && provider_funds.amount >= amount {
+    //             token_available = true;
+    //             token_provider = provider;
+    //             break;
+    //         }
+    //     }
+        
+    //     require!(token_available, "Token solicitado não disponível em quantidade suficiente");
+        
+    //     // Atualizar estado do pool
+    //     self.total_borrows().update(|v| *v += &amount);
+    //     self.borrower_debt(&borrower).update(|v| *v += &amount);
+        
+    //     // Reduzir a disponibilidade do token no provedor
+    //     let mut provider_funds = self.provider_funds(token_provider.clone()).get();
+    //     provider_funds.amount -= &amount;
+    //     self.provider_funds(token_provider).set(provider_funds);
+        
+    //     // Atualizar taxa de utilização
+    //     self.update_utilization_rate();
+        
+    //     // Converter token para formato apropriado e transferir para o tomador
+    //     let esdt_token = EgldOrEsdtTokenIdentifier::esdt(token_id.clone());
+    //     self.send().direct(&borrower, &esdt_token, 0, &amount);
+        
+    //     // Emitir evento para auditoria (opcional, mas recomendado)
+    //     self.loan_created_event(
+    //         &caller,              // controlador de empréstimos
+    //         &borrower,            // tomador
+    //         &token_id,            // token
+    //         &amount               // valor
+    //     );
+        
+    //     // Retornar informações do pagamento
+    //     EsdtTokenPayment::new(token_id, 0, amount)
+    // }
+
+    // Evento para auditoria de empréstimos
+    #[event("loan_created")]
+    fn loan_created_event(
+        &self,
+        #[indexed] controller: &ManagedAddress,
+        #[indexed] borrower: &ManagedAddress,
+        #[indexed] token: &TokenIdentifier,
+        #[indexed] amount: &BigUint
+    );
+    
     // Endpoint repay para devolução de empréstimos
+    #[payable("*")]
     #[endpoint(repay)]
-    fn repay_endpoint(&self) {
+    fn repay_endpoint(&self) -> EsdtTokenPayment<Self::Api> {
         self.require_not_paused();
         
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().egld_or_single_esdt();
         let amount = payment.amount.clone();
+        let payment_token = payment.token_identifier.clone();
         
+        // Verificar que o pagamento não é em EGLD
+        require!(!payment_token.is_egld(), "EGLD não é aceito, apenas tokens ESDT");
+        
+        // Verificar que o tomador tem dívida
         let current_debt = self.borrower_debt(&caller).get();
-        let new_debt = if amount > current_debt { 
-            BigUint::zero() 
+        require!(current_debt > BigUint::zero(), "Sem dívida para pagar");
+        
+        // Determinar o valor a ser pago
+        let payment_amount = if amount > current_debt { 
+            current_debt.clone() 
         } else { 
-            &current_debt - &amount 
+            amount.clone() 
         };
         
+        // Atualizar dívida do tomador
+        let new_debt = &current_debt - &payment_amount;
         self.borrower_debt(&caller).set(&new_debt);
-        self.total_borrows().update(|v| *v -= &amount);
         
-        // Atualiza a taxa de utilização
+        // Atualizar total de empréstimos
+        self.total_borrows().update(|v| *v -= &payment_amount);
+        
+        // Atualizar a taxa de utilização
         self.update_utilization_rate();
+        
+        // Se o pagamento é maior que a dívida, devolver a diferença
+        let refund_amount = if amount > current_debt {
+            &amount - &current_debt
+        } else {
+            BigUint::zero()
+        };
+        
+        // Emitir evento para auditoria
+        self.loan_repayment_event(
+            &caller,             // tomador que está pagando
+            &payment_token.clone().unwrap_esdt(),  // token
+            &payment_amount,     // valor pago
+            &new_debt            // dívida restante
+        );
+        
+        // Se houver valor a reembolsar, envia de volta ao chamador
+        if refund_amount > BigUint::zero() {
+            self.send().direct(&caller, &payment_token, 0, &refund_amount);
+            
+            // Retornar informações sobre o reembolso
+            EsdtTokenPayment::new(payment_token.unwrap_esdt(), 0, refund_amount)
+        } else {
+            // Retornar recibo de pagamento (valor zero, já que todo o valor foi aplicado à dívida)
+            EsdtTokenPayment::new(payment_token.unwrap_esdt(), 0, BigUint::zero())
+        }
     }
-    
+
+    // Evento para auditoria de pagamentos
+    #[event("loan_repayment")]
+    fn loan_repayment_event(
+        &self,
+        #[indexed] borrower: &ManagedAddress,
+        #[indexed] token: &TokenIdentifier,
+        #[indexed] amount: &BigUint,
+        #[indexed] remaining_debt: &BigUint
+    );
+
     // Função para atualizar a taxa de utilização
     fn update_utilization_rate(&self) {
         let borrows = self.total_borrows().get();
         let liquidity = self.total_liquidity().get();
         
+        // Liquidez total (para cálculo da taxa) inclui tanto a liquidez disponível quanto a emprestada
+        let total_for_calculation = &liquidity + &borrows;
+        
         // Calcula a taxa de utilização (em base 10000)
-        let util_rate = if liquidity == BigUint::zero() {
+        let util_rate = if total_for_calculation == BigUint::zero() {
             0u64
         } else {
-            (borrows.clone() * BigUint::from(10000u32) / liquidity).to_u64().unwrap_or(0)
+            // Taxa de utilização = (empréstimos / total) * 10000
+            (borrows.clone() * BigUint::from(10000u32) / total_for_calculation).to_u64().unwrap_or(0)
         };
         
         // Atualiza o armazenamento
         self.utilization_rate().set(util_rate);
     }
-    
+
     // Função para pausar o contrato
     #[endpoint]
     fn pause(&self) {

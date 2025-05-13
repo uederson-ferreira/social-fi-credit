@@ -93,14 +93,38 @@
         {
             "name": "borrow",
             "mutability": "mutable",
-            "inputs": [],
-            "outputs": []
+            "inputs": [
+                {
+                    "name": "borrower",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "token_id",
+                    "type": "TokenIdentifier"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "EsdtTokenPayment"
+                }
+            ]
         },
         {
             "name": "repay",
             "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
             "inputs": [],
-            "outputs": []
+            "outputs": [
+                {
+                    "type": "EsdtTokenPayment"
+                }
+            ]
         },
         {
             "name": "pause",
@@ -304,6 +328,16 @@
             ]
         },
         {
+            "name": "get_token_price",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
             "name": "getBorrowerDebt",
             "mutability": "readonly",
             "inputs": [
@@ -355,6 +389,56 @@
         }
     ],
     "events": [
+        {
+            "identifier": "loan_created",
+            "inputs": [
+                {
+                    "name": "controller",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "borrower",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "token",
+                    "type": "TokenIdentifier",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "loan_repayment",
+            "inputs": [
+                {
+                    "name": "borrower",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "token",
+                    "type": "TokenIdentifier",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "remaining_debt",
+                    "type": "BigUint",
+                    "indexed": true
+                }
+            ]
+        },
         {
             "identifier": "funds_deposited",
             "inputs": [
@@ -424,6 +508,23 @@
     "esdtAttributes": [],
     "hasCallback": false,
     "types": {
+        "EsdtTokenPayment": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "token_identifier",
+                    "type": "TokenIdentifier"
+                },
+                {
+                    "name": "token_nonce",
+                    "type": "u64"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
         "ProviderFunds": {
             "type": "struct",
             "fields": [
